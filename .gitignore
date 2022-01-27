@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Data is used to store anything that we don't wan to upload to github
+data/
+.idea
 # C extensions
 *.so
 
