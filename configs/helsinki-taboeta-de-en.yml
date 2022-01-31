@@ -1,0 +1,24 @@
+# This file is an example config file
+
+name: 'helsinki-taboeta-de-en'
+model:
+  name: 'Helsinki-NLP/opus-mt-de-en'
+  save_location: 'todo'
+  type: 'MarianMT'
+dataset:
+  name: 'tatoeba'
+  source: 'de'
+  target: 'en'
+train_params:
+  lr: 0.0003
+  lr_decay: 16000
+  decay_func: 'sqrt_root'
+  #We want an effective batch size of 64
+  batch_size: 8
+  grad_acc_steps: 8
+  optimizer:
+    name: 'Adam'
+
+  validation_strat: 'steps'
+  clip_norm: 5
+  use_best_found: True

@@ -1,14 +1,10 @@
 ### Scripts for generating statistics from samples
 # We use the same tokenizer for each sample to get consistent tokenization
 
-
 import argparse
 from collections import Counter
-
-import torch
-from transformers import MarianTokenizer, AutoModelForSeq2SeqLM
-import numpy as np
-from utils.dataset_utils import get_dataset, load_samples, save_pickle
+from transformers import MarianTokenizer
+from utils.dataset_utils import get_dataset, load_samples, save_pickle, load_pickle
 
 
 def get_bigrams(ids):
@@ -85,11 +81,11 @@ def main():
     results["targets"] = {"n_grams": n_grams, "lengths": length}
 
     print(results)
-    print("Saving to ...")
-    save_pickle(results, "./data/{}.pkl".format(args.name))
+    print("Saving")
+    ref = "./data/{}.pkl".format(args.name)
+    save_pickle(results, ref)
 
-
-
+    loaded_results = load_pickle("./data/{}.pkl".format(args.name))
 
 if __name__ == '__main__':
     main()

@@ -53,6 +53,7 @@ def main():
     save_samples(samples, ref)
 
     print("Small sample:")
+    print(dataset[:10])
     print(samples[:10])
 
 

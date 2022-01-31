@@ -1,16 +1,17 @@
+import json
 import pickle
 
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 
 
-def get_dataset(dataset_name):
+def get_dataset(dataset_name, source='de', target='en'):
     result = None
     if dataset_name == "tatoeba":
-        dataset = load_dataset("tatoeba", lang1="de", lang2="en", )["train"]
+        dataset = load_dataset("tatoeba", lang1=source, lang2=target, )["train"]
 
         # Load the splits
         splits = load_pickle("./data/splits.pkl")
-        result = {k: dataset[v] for k, v in splits.items()}
+        result = {k: Dataset.from_dict(dataset[v]) for k, v in splits.items()}
     else:
         raise ValueError("Not a known dataset: {}".format(dataset_name))
 
@@ -36,3 +37,9 @@ def save_samples(samples, ref):
 
 def load_samples(ref):
     return load_pickle(ref)
+
+
+
+def save_dict_to_json(dict, ref):
+    with open(ref, 'w') as fp:
+        json.dump(dict, fp,)
