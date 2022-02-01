@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
 
     # Parse the config and load all the things we need
-    parsed_config = parse_config(args.config, test=True)
+    parsed_config = parse_config(args.config, pretrained=True)
     model = parsed_config["model"]
     tokenizer = parsed_config["tokenizer"]
     model = model.to("cuda")

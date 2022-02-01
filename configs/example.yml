@@ -3,6 +3,7 @@
 name: 'example'
 model:
   name: 'Helsinki-NLP/opus-mt-de-en'
+  checkpoint: 'Helsinki-NLP/opus-mt-de-en'
   type: 'MarianMT'
 dataset:
   name: 'tatoeba'

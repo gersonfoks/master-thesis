@@ -10,7 +10,7 @@ def get_dataset(dataset_name, source='de', target='en'):
         dataset = load_dataset("tatoeba", lang1=source, lang2=target, )["train"]
 
         # Load the splits
-        splits = load_pickle("./data/splits.pkl")
+        splits = load_pickle("./data/splits_tatoeba.pkl")
         result = {k: Dataset.from_dict(dataset[v]) for k, v in splits.items()}
     else:
         raise ValueError("Not a known dataset: {}".format(dataset_name))

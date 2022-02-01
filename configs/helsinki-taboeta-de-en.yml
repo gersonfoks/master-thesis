@@ -3,22 +3,35 @@
 name: 'helsinki-taboeta-de-en'
 model:
   name: 'Helsinki-NLP/opus-mt-de-en'
-  save_location: 'todo'
+  checkpoint: 'data/results/checkpoint-10000'
   type: 'MarianMT'
 dataset:
   name: 'tatoeba'
   source: 'de'
   target: 'en'
-train_params:
-  lr: 0.0003
-  lr_decay: 16000
-  decay_func: 'sqrt_root'
+trainer_args:
+  seed: 1
+  learning_rate: 0.0003
+  warmup_steps: 16000
+  lr_scheduler_type: 'inv_sqrt'
   #We want an effective batch size of 64
-  batch_size: 8
-  grad_acc_steps: 8
+  batch_size: 32
+  gradient_accumulation_steps: 2
   optimizer:
     name: 'Adam'
-
-  validation_strat: 'steps'
-  clip_norm: 5
+    betas:
+      - 0.9
+      - 0.98
+    eps: 1e-09
+  evaluation_strategy: 'steps'
+  eval_steps: 10000
+  save_strategy: 'steps'
+  save_steps: 10000
+  max_grad_norm: 5 # gradient clipping
   use_best_found: True
+  num_train_epochs: 500 # We want to do unlimited steps and use early stopping so we set to very high
+  early_stopping: True
+  metric_for_best_model: "eval_loss"
+  load_best_model_at_end: True
+  early_stopping_patience: 10
+  start_decay: 10 # After how many epochs we need to start decaying

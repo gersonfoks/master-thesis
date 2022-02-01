@@ -1,3 +1,4 @@
+import transformers
 import yaml
 from datasets import load_metric
 from transformers import MarianTokenizer, MarianMTModel
@@ -7,7 +8,7 @@ from utils.metric_utils import get_sacrebleu
 from utils.train_utils import preprocess_tokenize
 
 
-def parse_config(config_ref, test=False):
+def parse_config(config_ref, pretrained=False):
     '''
     Parses a config and puts all the things in it such that we can work with it
      - Model
@@ -18,7 +19,6 @@ def parse_config(config_ref, test=False):
     :param test: Whether we are testing or training (regulates what we will load, e.g. when testing we don't need to load the trainer
     :return:
     '''
-
     # Load the config to a dict
     config = None
     with open(config_ref, "r") as file:
@@ -26,7 +26,7 @@ def parse_config(config_ref, test=False):
     # Get each part of the config
 
     # Load the model
-    model, tokenizer = load_model(config, test=test)
+    model, tokenizer = load_model(config, pretrained=pretrained)
     result = {
         "config": config,
         "model": model,
@@ -42,15 +42,14 @@ def parse_config(config_ref, test=False):
     preprocess_function = lambda x: preprocess_tokenize(x, tokenizer)
     result["preprocess_function"] = preprocess_function
 
-
     return result
 
 
-def load_model(config, test=False):
+def load_model(config, pretrained=False):
     '''
-    Loads the model described in the config
+    Loads the model described in the config,
     :param config:
-    :param test:
+    :param pretrained: if we load a pretrained model or not
     :return:
     '''
     model_name = config["model"]["name"]
@@ -64,10 +63,11 @@ def load_model(config, test=False):
         raise ValueError("Base model not found: {}".format(config["model"]["type"]))
 
     model = None
-    if test:
-        model = Base.from_pretrained(model_name)
+    if pretrained:
+        model = Base.from_pretrained(config["model"]["checkpoint"])
     else:
-        pass
+        configuration = transformers.AutoConfig.from_pretrained(model_name)
+        model = Base(configuration)
 
     return model, tokenizer
 
