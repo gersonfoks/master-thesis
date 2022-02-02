@@ -16,7 +16,8 @@ from utils.config_utils import parse_config
 
 def main():
     # Training settings
-    parser = argparse.ArgumentParser(description='Train a model according with parameters specified in the config file ')
+    parser = argparse.ArgumentParser(
+        description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str, default='./configs/example.yml',
                         help='config to load model from')
 
@@ -54,7 +55,7 @@ def main():
         steps_per_epoch = math.ceil(dataset_size / effective_step_size)
 
         # When to start the decay
-        start_step_decay = steps_per_epoch * trainer_args["start_decay"]
+        start_step_decay = steps_per_epoch * trainer_args["start_decay"] + num_warmup_steps
 
         def lr_lambda(current_step: int):
 

@@ -1,6 +1,6 @@
 import transformers
 import yaml
-from datasets import load_metric
+
 from transformers import MarianTokenizer, MarianMTModel
 
 from utils.dataset_utils import get_dataset

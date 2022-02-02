@@ -3,7 +3,7 @@
 name: 'helsinki-taboeta-de-en'
 model:
   name: 'Helsinki-NLP/opus-mt-de-en'
-  checkpoint: 'data/results/checkpoint-10000'
+  checkpoint: 'data/tatoeba-MLE-1'
   type: 'MarianMT'
 dataset:
   name: 'tatoeba'
@@ -14,9 +14,10 @@ trainer_args:
   learning_rate: 0.0003
   warmup_steps: 16000
   lr_scheduler_type: 'inv_sqrt'
-  #We want an effective batch size of 64
-  batch_size: 32
-  gradient_accumulation_steps: 2
+  #We want an effective batch size of 64, alter the below variables such that the batch size fits on the GPU
+  batch_size: 8
+  gradient_accumulation_steps: 4
+
   optimizer:
     name: 'Adam'
     betas:

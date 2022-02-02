@@ -22,7 +22,8 @@ def sample_model(model, tokenizer, source_texts, method="ancestral",):
         sample = model.generate(
             **tokenized,
             do_sample=True,
-            top_k=0
+            num_beams=1,
+            top_k=0,
         )
     elif method == "beam":
         sample = model.generate(
