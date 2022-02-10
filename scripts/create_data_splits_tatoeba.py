@@ -6,7 +6,7 @@ from datasets import load_dataset
 # Load the dataset
 
 seed = 1
-# First is for finetuning/training NMT model, second is for training the predictive model, third is for validation, rest is for test.
+# First is for finetuning/train NMT model, second is for train the predictive model, third is for validation, rest is for test.
 dataset = load_dataset("tatoeba", lang1="de", lang2="en", )["train"]
 
 n_samples = len(dataset)

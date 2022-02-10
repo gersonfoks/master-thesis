@@ -17,7 +17,7 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(description='Finetuning a model')
     parser.add_argument('--batch-size', type=int, default=8, metavar='N',
-                        help='input batch size for training (default: 16)')
+                        help='input batch size for train (default: 16)')
     parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=1e-5, metavar='LR',

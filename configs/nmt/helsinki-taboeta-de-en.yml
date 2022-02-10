@@ -1,6 +1,6 @@
-# This file is an example config file
-
-name: 'helsinki-taboeta-de-en'
+# This file contains the config for the tatoeba-de-en model.
+# The parameters are based on the train parameters of Helsinki-NLP/opus-mt-de-en
+name: 'helsinki-tatoeba-de-en'
 model:
   name: 'Helsinki-NLP/opus-mt-de-en'
   checkpoint: 'data/tatoeba-MLE-1'

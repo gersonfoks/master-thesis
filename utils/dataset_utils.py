@@ -1,6 +1,6 @@
 import json
 import pickle
-
+import torch
 from datasets import load_dataset, Dataset
 from transformers import DataCollatorForSeq2Seq
 
@@ -64,5 +64,30 @@ def get_collate_fn(model, tokenizer, source, target):
         targets = [s["translation"][target] for s in batch]
 
         return x_new, (sources, targets)
+
+    return collate_fn
+
+
+def get_predictive_collate_fn(model, tokenizer, ):
+    data_collator = DataCollatorForSeq2Seq(model=model, tokenizer=tokenizer,
+                                           padding=True, return_tensors="pt")
+
+    keys = [
+        "input_ids",
+        "attention_mask",
+        "labels"
+    ]
+
+    def collate_fn(batch):
+        new_batch = [{k: s[k] for k in keys} for s in batch]
+        x_new = data_collator(new_batch)
+
+        sources = [s["source"] for s in batch]
+        hypothesis = [s["hypothesis"] for s in batch]
+
+        # Group the averages and the standard deviations
+        utilities = torch.Tensor([s["utility"] for s in batch])
+
+        return x_new, (sources, hypothesis), utilities
 
     return collate_fn

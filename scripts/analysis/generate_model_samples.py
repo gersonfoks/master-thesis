@@ -20,7 +20,7 @@ def main():
 
     parser.add_argument('--model', type=str, default='Helsinki-NLP/opus-mt-de-en')
     parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
+                        help='disables CUDA train')
     parser.add_argument('--dataset', type=str, default="tatoeba", help="The dataset to create the statistics for")
     parser.add_argument('--n_samples', type=int, default=500, help="How many samples are used")
 

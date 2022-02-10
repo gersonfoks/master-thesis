@@ -5,7 +5,6 @@ import argparse
 import torch
 from datasets import tqdm, load_metric
 from torch.utils.data import DataLoader
-from transformers import DataCollatorForSeq2Seq, Trainer, TrainingArguments, Seq2SeqTrainer, Seq2SeqTrainingArguments
 
 from utils.config_utils import parse_config
 from utils.dataset_utils import save_dict_to_json, get_collate_fn
@@ -14,8 +13,8 @@ from utils.translation_model_utils import translate
 
 def main():
     # Training settings
-    parser = argparse.ArgumentParser(description='Finetuning a model')
-    parser.add_argument('--config', type=str, default='./configs/example.yml',
+    parser = argparse.ArgumentParser(description='Test an NMT model')
+    parser.add_argument('--config', type=str, default='./configs/nmt/helsinki-taboeta-de-en.yml',
                         help='config to load model from')
 
     args = parser.parse_args()
@@ -68,7 +67,7 @@ def main():
             sum_accs += torch.sum(correct).item()
 
             # Calculate Blue by getting a random sample
-            translations = translate(model, tokenizer, sources, batch_size=8,)
+            translations = translate(model, tokenizer, sources, batch_size=8, method="beam")
 
             targets = [[txt] for txt in targets]
             sacreblue_metric.add_batch(predictions=translations, references=targets)
