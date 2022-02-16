@@ -42,7 +42,7 @@ def main():
     val_dataset = parsed_config["validation_dataset"]
 
     preprocess_function = get_preprocess_function(tokenizer)
-    #train_dataset = train_dataset.map(preprocess_function, batched=True)
+    train_dataset = train_dataset.map(preprocess_function, batched=True)
     val_dataset = val_dataset.map(preprocess_function, batched=True)
 
     collate_fn = get_predictive_collate_fn(nmt_model, tokenizer, )
@@ -50,13 +50,13 @@ def main():
     train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, batch_size=32, shuffle=True, )
     val_dataloader = DataLoader(val_dataset, collate_fn=collate_fn, batch_size=32, shuffle=False, )
 
-    trainer = pl.Trainer(gpus=1, accumulate_grad_batches=2, max_epochs=1,)#
+    trainer = pl.Trainer(gpus=1, accumulate_grad_batches=2, max_epochs=10, val_check_interval=0.25)#
 
     trainer.fit(pl_model, train_dataloader=train_dataloader, val_dataloaders=val_dataloader, )
 
     save_model(pl_model, parsed_config["config"], "./data/develop_model")
 
-    loaded_pl_model = load_model("./data/develop_model")
+    loaded_pl_model = load_model("./data/develop_model", type="MSE")
 
     # Validate new model (just to be sure)
     trainer.validate(loaded_pl_model, val_dataloaders=val_dataloader, )

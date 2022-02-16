@@ -4,8 +4,8 @@ import pandas as pd
 from datasets import Dataset
 import torch
 from transformers import MarianTokenizer, MarianMTModel
-
-from models.pl_predictive_model import BasicPredictiveModelPL
+import numpy as np
+from models.pl_predictive_model import GaussianPredictiveModelPL, MLEPredictiveModelPL
 from utils.dataset_utils import get_dataset
 from utils.metric_utils import get_sacrebleu
 from utils.train_utils import preprocess_tokenize
@@ -75,7 +75,7 @@ def parse_predictive_config(config_ref, pretrained=False):
     }
 
     # Load the pl model
-    pl_model = BasicPredictiveModelPL(nmt_model, tokenizer)
+    pl_model = MLEPredictiveModelPL(nmt_model, tokenizer)
 
     result["pl_model"] = pl_model
 
@@ -147,7 +147,7 @@ def get_predictive_dataset(name, pandas=True):
     validation_dataset = pd.read_csv('./data/validation_predictive_helsinki-tatoeba-de-en_1000_bayes_risk.csv',
                                      sep="\t")
     train_dataset = pd.read_csv('./data/train_predictive_helsinki-tatoeba-de-en_1000_bayes_risk.csv',
-                                sep="\t").head(500)
+                                sep="\t")
 
     validation_dataset = Dataset.from_pandas(split_columns(validation_dataset))
     train_dataset = Dataset.from_pandas(split_columns(train_dataset))
@@ -156,10 +156,10 @@ def get_predictive_dataset(name, pandas=True):
 
 
 def split_columns(dataset):
-    dataset["utilities"] = dataset["utilities"].apply(lambda x: ast.literal_eval(x))
+    dataset["utility"] = dataset["utilities"].apply(lambda x: np.mean(ast.literal_eval(x)))
 
-    dataset = dataset.explode("utilities")
-    dataset.rename(columns={"utilities": "utility"}, inplace=True)
+    # dataset = dataset.explode("utilities")
+    # dataset.rename(columns={"utilities": "utility"}, inplace=True)
 
     return dataset
 
@@ -178,12 +178,20 @@ def save_model(model, config, location, ):
     torch.save(parameters, location)
 
 
-def load_model(location):
+def load_model(location, type="MSE"):
     state_dict = torch.load(location)
+
     nmt_model, tokenizer = load_nmt_model(state_dict["config"]["nmt_model"], pretrained=True)
 
-    model = BasicPredictiveModelPL(nmt_model, tokenizer)
+    if type == "gaussian":
+        model = GaussianPredictiveModelPL(nmt_model, tokenizer)
 
-    model.linear_layers.load_state_dict(state_dict["linear_layers"])
+        model.linear_layers.load_state_dict(state_dict["linear_layers"])
+    elif type == "MSE":
+        model = MLEPredictiveModelPL(nmt_model, tokenizer)
+
+        model.linear_layers.load_state_dict(state_dict["linear_layers"])
+    else:
+        raise ValueError("No model of type: {}".format(type))
 
     return model

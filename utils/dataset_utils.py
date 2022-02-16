@@ -79,6 +79,7 @@ def get_predictive_collate_fn(model, tokenizer, ):
     ]
 
     def collate_fn(batch):
+
         new_batch = [{k: s[k] for k in keys} for s in batch]
         x_new = data_collator(new_batch)
 

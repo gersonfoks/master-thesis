@@ -14,7 +14,7 @@ def main():
     data = get_dataset("tatoeba", source="de",
                        target="en")
 
-    test_data = Dataset.from_dict(data["test"][:1000])
+    test_data = Dataset.from_dict(data["test"][:100])
     print(type(test_data))
     loaded_pl_model = load_model("./data/develop_model").eval()
     model = NMTBayesRisk(loaded_pl_model)
@@ -27,6 +27,10 @@ def main():
             target = [[x["translation"]["en"]]]
 
             translation = model.forward(source, n_samples_per_source=96)
+
+            print(translation)
+            print(target)
+
             sacreblue_metric.add_batch(predictions=[translation], references=target)
         bleu = sacreblue_metric.compute()
         test_results = {

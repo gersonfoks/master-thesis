@@ -60,7 +60,7 @@ def get_collate_fn_predictive_test(model, tokenizer, ):
         x_new = data_collator(new_batch)
 
         # Group the averages and the standard deviations
-        utilities = torch.Tensor(batch["avg_utility"])
+        utilities = torch.Tensor(batch["utility"])
 
         return x_new, (source, hypothesis), utilities
 
@@ -81,12 +81,12 @@ def main():
     # Load the dataset and preprocess
     dataset = pd.read_csv('./data/validation_predictive_helsinki-tatoeba-de-en_1000_bayes_risk.csv',
                           sep="\t")
-    dataset["avg_utility"] = dataset["utilities"].apply(lambda x: float(np.mean(ast.literal_eval(x))))
+    dataset["utility"] = dataset["utilities"].apply(lambda x: float(np.mean(ast.literal_eval(x))))
 
     grouped_dataset = dataset.groupby("source")
 
     grouped_hypothesis = grouped_dataset["hypothesis"].apply(list).reset_index()
-    grouped_utility = grouped_dataset["avg_utility"].apply(list).reset_index()
+    grouped_utility = grouped_dataset["utility"].apply(list).reset_index()
 
     # dataset = pd.concat([grouped_hypothesis, grouped_utility], axis=1)
     dataset = grouped_hypothesis.set_index("source").join(grouped_utility.set_index("source"),
@@ -115,21 +115,19 @@ def main():
         for x, (source, hypothesis), utilities in tqdm(dataloader):
             x = {k: v.to("cuda") for k, v in x.items()}
 
-            (predicted_avg, predicted_std) = model.forward(**x)
+            predicted_score = model.forward(**x).flatten()
 
             utilities = utilities.to("cuda")
-            predicted_avg = predicted_avg.flatten()
 
-            var = predicted_std.flatten()
-            loss = model.criterion(predicted_avg, utilities, var=var)
+
+            loss = model.criterion(predicted_score, utilities, )
             sum_loss += loss
 
 
 
-
+            # Get the order of everything.
             real_order = utilities.cpu().numpy().argsort().argsort()
-
-            predicted_order = predicted_avg.cpu().numpy().argsort().argsort()
+            predicted_order = predicted_score.cpu().numpy().argsort().argsort()
 
             predicted_first = np.argmax(predicted_order)
             real_first = np.argmax(real_order)

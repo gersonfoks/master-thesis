@@ -21,9 +21,7 @@ def main():
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str, default='./configs/example.yml',
                         help='config to load model from')
-    parser.add_argument('--n-references', type=int, default=100, help='number of references for each source')
-    parser.add_argument('--n-reference-sets', type=int, default=10,
-                        help='number of references to check the hypothesis against')
+    parser.add_argument('--n-samples', type=int, default=100, help='number of references for each source')
     parser.add_argument('--split', type=str, default="train_predictive",
                         help="Which split to pick (train_predictive or validation_predictive")
     parser.add_argument('--result-dir', type=str, default="./data/",
@@ -35,7 +33,7 @@ def main():
 
     save_every = args.save_every
 
-    n_samples_needed = args.n_references * args.n_reference_sets
+    n_samples_needed = args.n_samples
 
     parsed_config = parse_config(args.config, pretrained=True)
 
@@ -51,7 +49,7 @@ def main():
 
     model_name = parsed_config["config"]["name"]
     save_file = "{}{}_{}_{}.csv".format(args.result_dir, args.split, model_name, n_samples_needed)
-    print(save_file)
+
     dataloader = DataLoader(dataset, collate_fn=collate_fn, batch_size=1, shuffle=False)
 
     column_names = ["source", "target", ] + ["samples"]

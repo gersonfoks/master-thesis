@@ -51,9 +51,11 @@ def main():
     model_path = download_model("wmt21-cometinho-da")
     model = load_from_checkpoint(model_path)
 
+
     model.to("cuda")
     model.eval()
     wrapped_model = CometWrapper(model)
+
     with torch.no_grad():
         for i, row in tqdm(data.iterrows(), total=data.shape[0]):
             source = row["source"]
