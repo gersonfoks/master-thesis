@@ -3,9 +3,9 @@
 from datasets import tqdm, load_metric, Dataset
 import torch
 
-from models.NMT_bayes_risk_model import NMTBayesRisk
-from utils.config_utils import parse_config, load_model
-from utils.dataset_utils import save_dict_to_json, get_collate_fn, get_dataset
+from models.predictive.NMT_bayes_risk_model import NMTBayesRisk
+from utils.config_utils import load_model
+from utils.dataset_utils import get_dataset
 
 
 

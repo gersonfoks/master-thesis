@@ -13,10 +13,10 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(description='Test an NMT model')
     parser.add_argument('--ref-dataset', type=str,
-                        default='./data/validation_predictive_helsinki-tatoeba-de-en_100.csv',
+                        default='./data/validation_predictive_ancestral_100.csv',
                         help='The references to use')
     parser.add_argument('--hypothesis-dataset', type=str,
-                        default='./data/validation_predictive_helsinki-tatoeba-de-en_100.csv',
+                        default='./data/validation_predictive_ancestral_100.csv',
                         help='The hypothesis to use')
 
     parser.add_argument("--save-output-base", type=str, default="./data/validation-helsinki-tatoeba")

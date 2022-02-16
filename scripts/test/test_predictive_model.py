@@ -79,7 +79,7 @@ def main():
     # parser = argparse.ArgumentParser(description='Test a predictive model')
 
     # Load the dataset and preprocess
-    dataset = pd.read_csv('./data/validation_predictive_helsinki-tatoeba-de-en_1000_bayes_risk.csv',
+    dataset = pd.read_csv('./data/validation_predictive_scores_5_1000_old.csv',
                           sep="\t")
     dataset["utility"] = dataset["utilities"].apply(lambda x: float(np.mean(ast.literal_eval(x))))
 

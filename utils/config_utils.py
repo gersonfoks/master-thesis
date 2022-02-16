@@ -5,11 +5,14 @@ from datasets import Dataset
 import torch
 from transformers import MarianTokenizer, MarianMTModel
 import numpy as np
-from models.pl_predictive_model import GaussianPredictiveModelPL, MLEPredictiveModelPL
+
+from models.predictive.MLEPredictiveModel import MLEPredictiveModel
+
 from utils.dataset_utils import get_dataset
 from utils.metric_utils import get_sacrebleu
 from utils.train_utils import preprocess_tokenize
 import ast
+from torch import nn
 
 
 def parse_config(config_ref, pretrained=False):
@@ -75,7 +78,9 @@ def parse_predictive_config(config_ref, pretrained=False):
     }
 
     # Load the pl model
-    pl_model = MLEPredictiveModelPL(nmt_model, tokenizer)
+    predictive_layers = nn.Sequential(nn.Linear(512 * 4, 512), torch.nn.SiLU(), nn.Dropout(p=0.25),
+                                      nn.Linear(512, 1))
+    pl_model = MLEPredictiveModel(nmt_model, tokenizer, predictive_layers)
 
     result["pl_model"] = pl_model
 
@@ -144,9 +149,9 @@ def get_metric(metric_config, tokenizer):
 def get_predictive_dataset(name, pandas=True):
     if name != "develop":
         raise NotImplementedError("should implement this function properly")
-    validation_dataset = pd.read_csv('./data/validation_predictive_helsinki-tatoeba-de-en_1000_bayes_risk.csv',
+    validation_dataset = pd.read_csv('./data/validation_predictive_scores_5_1000_old.csv',
                                      sep="\t")
-    train_dataset = pd.read_csv('./data/train_predictive_helsinki-tatoeba-de-en_1000_bayes_risk.csv',
+    train_dataset = pd.read_csv('./data/train_predictive_scores_5_1000_old.csv',
                                 sep="\t")
 
     validation_dataset = Dataset.from_pandas(split_columns(validation_dataset))
@@ -188,7 +193,9 @@ def load_model(location, type="MSE"):
 
         model.linear_layers.load_state_dict(state_dict["linear_layers"])
     elif type == "MSE":
-        model = MLEPredictiveModelPL(nmt_model, tokenizer)
+        predictive_layers = nn.Sequential(nn.Linear(512 * 2, 512), torch.nn.SiLU(), nn.Dropout(p=0.25),
+                                          nn.Linear(512, 1))
+        model = MLEPredictiveModelPL(nmt_model, tokenizer, predictive_layers)
 
         model.linear_layers.load_state_dict(state_dict["linear_layers"])
     else:

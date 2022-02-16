@@ -1,8 +1,6 @@
-
 import argparse
 import ast
 import torch
-
 
 import pandas as pd
 from comet import download_model, load_from_checkpoint
@@ -27,12 +25,13 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(description='Test an NMT model')
     parser.add_argument('--ref-dataset', type=str,
-                        default='./data/train_predictive_helsinki-tatoeba-de-en_100.csv',
+                        default='./trained_models/NMT/tatoeba-de-en/data/train_predictive_ancestral_100.csv',
                         help='The references to use')
     parser.add_argument('--hypothesis-dataset', type=str,
-                        default='./data/train_predictive_helsinki-tatoeba-de-en_10.csv',
+                        default='./trained_models/NMT/tatoeba-de-en/data/train_predictive_ancestral_10.csv',
                         help='The hypothesis to use')
-    parser.add_argument("--save-file", type=str, default="./data/train-helsinki-tatoeba-scores.csv")
+    parser.add_argument("--save-file", type=str,
+                        default='./trained_models/NMT/tatoeba-de-en/data/train_predictive_ancestral_scores_10_100.csv')
 
     args = parser.parse_args()
 
@@ -60,7 +59,6 @@ def main():
         for source, references, hypothesis in tzip(ref_data["source"], ref_data["samples"], hyp_data["samples"]):
 
             reference_sets = [*references.keys()]
-
 
             for h, count in hypothesis.items():
 
@@ -94,8 +92,6 @@ def main():
                 new_data_row["utilities"] = utilities
                 new_data_row["count"] = count
                 df = df.append(new_data_row, ignore_index=True)
-
-
 
     print("Saving...")
     df.to_csv(args.save_file, index=False, sep="\t")
