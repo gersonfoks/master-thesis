@@ -1,17 +1,19 @@
+import ast
+
 import transformers
 import yaml
 import pandas as pd
 from datasets import Dataset
 import torch
 from transformers import MarianTokenizer, MarianMTModel
-import numpy as np
 
-from models.predictive.MLEPredictiveModel import MLEPredictiveModel
+from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
+from models.pl_predictive.MLEPredictiveModel import MSEPredictiveModel
 
 from utils.dataset_utils import get_dataset
-from utils.metric_utils import get_sacrebleu
+
 from utils.train_utils import preprocess_tokenize
-import ast
+
 from torch import nn
 
 
@@ -52,7 +54,7 @@ def parse_config(config_ref, pretrained=False):
     return result
 
 
-def parse_predictive_config(config_ref, pretrained=False):
+def parse_predictive_config(config_ref, pretrained=False, preprocessing=False):
     '''
     Parses a config and puts all the things in it such that we can work with it
      - Model
@@ -78,14 +80,27 @@ def parse_predictive_config(config_ref, pretrained=False):
     }
 
     # Load the pl model
-    predictive_layers = nn.Sequential(nn.Linear(512 * 4, 512), torch.nn.SiLU(), nn.Dropout(p=0.25),
-                                      nn.Linear(512, 1))
-    pl_model = MLEPredictiveModel(nmt_model, tokenizer, predictive_layers)
+
+    predictive_layers = get_predictive_layers(config["predictive_model"])
+
+    pl_model = None
+    if config["predictive_model"]["type"] == "MSE":
+
+        pl_model = MSEPredictiveModel(nmt_model, tokenizer, predictive_layers)
+    elif config["predictive_model"]["type"] == "gaussian":
+        pass
+    else:
+        raise ValueError("Type of model unknown: {}, should be one of ['MLE', 'gaussian']".format(type))
 
     result["pl_model"] = pl_model
-
     # load the dataset
-    train_dataset, validation_dataset = get_predictive_dataset(config["dataset"]["name"], )
+
+    if not preprocessing:
+        train_dataset, validation_dataset = get_predictive_dataset(config["dataset_train"],
+                                                                   config["dataset_validation"])
+    else:
+        train_dataset, validation_dataset = get_predictive_dataset(config["original_dataset_train"],
+                                                                   config["original_dataset_validation"], explode=False)
 
     result["train_dataset"] = train_dataset
     result["validation_dataset"] = validation_dataset
@@ -94,6 +109,29 @@ def parse_predictive_config(config_ref, pretrained=False):
     result["preprocess_function"] = preprocess_function
 
     return result
+
+
+activation_functions = {
+    'silu': torch.nn.SiLU
+}
+
+
+def get_predictive_layers(architecture_config):
+    activation_function = activation_functions[architecture_config['activation_function']]
+
+    layers = []
+    # Add all the layers except the last one
+    for layer_in, layer_out in zip(architecture_config['layers'][:-2], architecture_config['layers'][1:-1]):
+        layers.append(nn.Linear(layer_in, layer_out))
+        layers.append(activation_function())
+        if architecture_config["dropout"] > 0:
+            layers.append(nn.Dropout(p=0.25))
+
+    # Add the last one
+
+    layers.append(nn.Linear(architecture_config['layers'][-2], architecture_config['layers'][-1]))
+
+    return nn.Sequential(*layers)
 
 
 def load_nmt_model(config, pretrained=False):
@@ -123,48 +161,41 @@ def load_nmt_model(config, pretrained=False):
     return model, tokenizer
 
 
-def load_metrics(config, tokenizer):
-    metrics = []
-    for metric in config["metrics"]:
-        metrics.append(get_metric(metric, tokenizer))
-    # Create compute metrics function
-
-    return metrics
-
-
-def get_metric(metric_config, tokenizer):
-    '''
-    Gets a metric
-    :param metric_config:
-    :param tokenizer: Tokenizer to tokenize the output of the model with
-    :return:
-    '''
-    # pass
-    if metric_config["name"] == "sacreblue":
-        return get_sacrebleu(tokenizer)
-    else:
-        raise ValueError("Metric not found")
-
-
-def get_predictive_dataset(name, pandas=True):
-    if name != "develop":
-        raise NotImplementedError("should implement this function properly")
-    validation_dataset = pd.read_csv('./data/validation_predictive_scores_5_1000_old.csv',
-                                     sep="\t")
-    train_dataset = pd.read_csv('./data/train_predictive_scores_5_1000_old.csv',
-                                sep="\t")
-
-    validation_dataset = Dataset.from_pandas(split_columns(validation_dataset))
-    train_dataset = Dataset.from_pandas(split_columns(train_dataset))
+def get_predictive_dataset(dataset_train_config, dataset_validation_config, explode=True):
+    train_dataset = load_dataset(dataset_train_config, explode=explode)
+    validation_dataset = load_dataset(dataset_validation_config, explode=explode)
 
     return train_dataset, validation_dataset
 
 
-def split_columns(dataset):
-    dataset["utility"] = dataset["utilities"].apply(lambda x: np.mean(ast.literal_eval(x)))
+def load_dataset(dataset_config, explode=True):
+    dataset = pd.read_csv(
+        dataset_config["loc"],
+        sep="\t")
 
-    # dataset = dataset.explode("utilities")
-    # dataset.rename(columns={"utilities": "utility"}, inplace=True)
+    if dataset_config["objective"] == 'mean':
+        dataset["utility"] = dataset["utilities"].map(lambda x: count_to_mean(ast.literal_eval(x)))
+
+    if explode:
+        dataset = dataset.reindex(dataset.index.repeat(dataset["count"])).reset_index()
+
+    # Also collapse based on count.
+    return Dataset.from_pandas(dataset)
+
+
+def count_to_mean(counter):
+    total_count = 0
+    total = 0
+    for value, c in counter.items():
+        total += value * c
+        total_count += c
+    # print(total_count / total)
+
+    return total / total_count
+
+
+def split_columns(dataset):
+    dataset["utility"] = dataset["utilities"]
 
     return dataset
 
@@ -189,13 +220,13 @@ def load_model(location, type="MSE"):
     nmt_model, tokenizer = load_nmt_model(state_dict["config"]["nmt_model"], pretrained=True)
 
     if type == "gaussian":
-        model = GaussianPredictiveModelPL(nmt_model, tokenizer)
+        model = GaussianPredictiveModel(nmt_model, tokenizer)
 
         model.linear_layers.load_state_dict(state_dict["linear_layers"])
     elif type == "MSE":
         predictive_layers = nn.Sequential(nn.Linear(512 * 2, 512), torch.nn.SiLU(), nn.Dropout(p=0.25),
                                           nn.Linear(512, 1))
-        model = MLEPredictiveModelPL(nmt_model, tokenizer, predictive_layers)
+        model = MSEPredictiveModel(nmt_model, tokenizer, predictive_layers)
 
         model.linear_layers.load_state_dict(state_dict["linear_layers"])
     else:

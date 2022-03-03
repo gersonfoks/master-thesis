@@ -1,0 +1,58 @@
+# Copies the structure of the NTM config, is used for loading the NMT model
+
+dataset:
+  base_dir: 'FBR/NMT/tatoeba-de-en/data'
+  preprocess_dir: 'FBR/predictive/preprocessed/tatoeba-de-en/COMET/pooled_data'
+  sampling_method: 'ancestral'
+  n_hypothesis: 10
+  n_references: 100
+
+hyperparams:
+  predictive_layers:
+    small:
+      - 2048
+      - 512
+      - 128
+      - 1
+    medium:
+      - 2048
+      - 1024
+      - 512
+      - 256
+      - 128
+      - 64
+      - 1
+  activation_function:
+    - 'silu'
+  dropout:
+    type: uniform
+    values:
+      - 0
+      - 0.9
+  lr:
+    type: loguniform
+    values:
+      - 0.00001
+      - 0.001
+  batch_size:
+    - 2048
+    - 512
+    - 64
+
+model_config:
+  weight_decay: 0.9
+  loss_function: 'MSE'
+  feature_type: 'last_layer_pool'
+  preprocess_type: 'pooled'
+  model_type: 'feed_forward'
+  features:
+  - 'avg_pool_encoder_hidden_state'
+  - 'avg_pool_decoder_hidden_state'
+  - 'max_pool_encoder_hidden_state'
+  - 'max_pool_decoder_hidden_state'
+  nmt_model:
+    model:
+      name: 'Helsinki-NLP/opus-mt-de-en'
+      checkpoint: 'NMT/tatoeba-de-en/model'
+      type: 'MarianMT'
+

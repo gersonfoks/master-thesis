@@ -1,25 +1,24 @@
+from datetime import datetime
+
 import pytorch_lightning as pl
 import torch
 
 
-class BasePredictiveModel(pl.LightningModule):
+class PLBasePredictiveModel(pl.LightningModule):
 
-    def __init__(self, nmt_model, tokenizer, predictive_layers, padding_id=-100, lr=0.00005, weight_decay=1e-5,
-                 device="cuda", ):
+    def __init__(self, nmt_model, tokenizer, predictive_model, initialize_optimizer, padding_id=-100, device="cuda", ):
         super().__init__()
-        self.nmt_model = nmt_model.to(device)
+        self.device_name = device
+        self.nmt_model = nmt_model.to(self.device_name)
         self.nmt_model.requires_grad = False
         self.tokenizer = tokenizer
         self.nmt_model.eval()  # Make sure we set the nmt_model to evaluate
         # Initialize the predictive layers
 
-        self.predictive_layers = predictive_layers
-        self.predictive_layers.to("cuda")
+        self.predictive_model = predictive_model
+        self.predictive_model.to(self.device_name)
 
         self.padding_id = padding_id
-
-        self.lr = lr
-        self.weight_decay = weight_decay
 
         # Need to specify in settings below
         self.criterion = None
@@ -27,6 +26,8 @@ class BasePredictiveModel(pl.LightningModule):
         self.log_vars = {
             "loss"
         }
+
+        self.initialize_optimizer = initialize_optimizer
 
     def forward(self, input_ids, attention_mask, labels, decoder_input_ids):
         raise NotImplementedError()
@@ -41,10 +42,15 @@ class BasePredictiveModel(pl.LightningModule):
 
         batch_out = self.batch_to_out(batch)
 
+        end_time = datetime.now()
+
+
         loss = batch_out["loss"]
 
         for log_var in self.log_vars:
             self.log("train_{}".format(log_var), batch_out[log_var])
+
+
 
         return loss
 
@@ -88,5 +94,6 @@ class BasePredictiveModel(pl.LightningModule):
         return predicted_risk
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.predictive_layers.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        return optimizer
+        return self.initialize_optimizer(self.predictive_model.parameters())
+        # optimizer =
+        # return optimizer

@@ -1,0 +1,98 @@
+# Copies the structure of the NTM config, is used for loading the NMT model
+
+dataset:
+  base_dir: 'FBR/NMT/tatoeba-de-en/data'
+  preprocess_dir: 'FBR/predictive/preprocessed/tatoeba-de-en/COMET/last_hidden'
+  sampling_method: 'ancestral'
+  n_hypothesis: 10
+  n_references: 100
+
+
+
+
+model_config:
+  weight_decay: 0.9
+  loss_function: 'MSE'
+  feature_type: 'last_layer'
+  model_type: 'lstm'
+  features:
+  - 'encoder_last_hidden_state'
+  - 'decoder_last_hidden_state'
+  # Additionally we need to couple de features,
+  # such that we know which one to couple when doing cross attention
+  coupled_features: # We perform cross attention on the encoder and the decoder
+    -
+      - 'encoder_last_hidden_state'
+      - 'decoder_last_hidden_state'
+    -
+      - 'decoder_last_hidden_state'
+      - 'encoder_last_hidden_state'
+  nmt_model:
+    model:
+      name: 'Helsinki-NLP/opus-mt-de-en'
+      checkpoint: 'NMT/tatoeba-de-en/model'
+      type: 'MarianMT'
+
+
+hyperparams:
+  predictive_layers:
+    types:
+      - small
+      - medium
+    definitions:
+      small:
+        - 512
+        - 256
+        - 128
+        - 1
+      medium:
+        - 512
+        - 256
+        - 128
+        - 64
+        - 1
+
+    activation_function:
+      - 'silu'
+      - 'relu'
+      - 'tanh'
+  dropout:
+    type: uniform
+    values:
+      - 0
+      - 0.9
+  recurrent_layers:
+    types:
+      - one_layer
+      - two_layer
+      - bi_one_layer
+      - bi_two_layer
+    definitions:
+      one_layer:
+        input_size: 512
+        hidden_size: 512
+        num_layers: 1
+      two_layer:
+        input_size: 512
+        hidden_size: 512
+        num_layers: 2
+      bi_one_layer:
+        input_size: 512
+        hidden_size: 512
+        num_layers: 1
+        bidirectional: True
+      bi_two_layer:
+        input_size: 512
+        hidden_size: 512
+        num_layers: 2
+        bidirectional: True
+
+  lr:
+    type: loguniform
+    values:
+      - 0.00001
+      - 0.01
+  batch_size:
+    - 64
+    - 32
+    - 16
