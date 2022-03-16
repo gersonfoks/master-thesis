@@ -54,7 +54,7 @@ def main():
     resulting_dataset = resulting_dataset_loader.load_empty()
 
     # Load the model
-    model_path = download_model("wmt21-cometinho-da")
+    model_path = download_model("wmt20-comet-da")
     model = load_from_checkpoint(model_path)
 
     model.to("cuda")
