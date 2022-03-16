@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 
 # Data is used to store anything that we don't wan to upload to github
-data/
+
 .idea
 comet_model
 lightning_logs
