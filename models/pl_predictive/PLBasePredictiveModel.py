@@ -6,7 +6,7 @@ import torch
 
 class PLBasePredictiveModel(pl.LightningModule):
 
-    def __init__(self, nmt_model, tokenizer, predictive_model, initialize_optimizer, padding_id=-100, device="cuda", ):
+    def __init__(self, nmt_model, tokenizer, head, initialize_optimizer, padding_id=-100, device="cuda", ):
         super().__init__()
         self.device_name = device
         self.nmt_model = nmt_model.to(self.device_name)
@@ -15,8 +15,8 @@ class PLBasePredictiveModel(pl.LightningModule):
         self.nmt_model.eval()  # Make sure we set the nmt_model to evaluate
         # Initialize the predictive layers
 
-        self.predictive_model = predictive_model
-        self.predictive_model.to(self.device_name)
+        self.head = head
+        self.head.to(self.device_name)
 
         self.padding_id = padding_id
 
@@ -40,9 +40,9 @@ class PLBasePredictiveModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
 
-        batch_out = self.batch_to_out(batch)
 
-        end_time = datetime.now()
+
+        batch_out = self.batch_to_out(batch)
 
 
         loss = batch_out["loss"]
@@ -57,7 +57,6 @@ class PLBasePredictiveModel(pl.LightningModule):
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         batch_out = self.batch_to_out(batch)
-
 
 
         for log_var in self.log_vars:
@@ -87,13 +86,12 @@ class PLBasePredictiveModel(pl.LightningModule):
         # labels
         is_padding = labels == self.tokenizer.pad_token_id
 
-        labels = labels * ~ is_padding + self.padding_id * is_padding
+        labels = labels * ~is_padding + self.padding_id * is_padding
 
         predicted_risk = self.get_predicted_risk(input_ids, attention_mask, labels, decoder_input_ids)
 
         return predicted_risk
 
     def configure_optimizers(self):
-        return self.initialize_optimizer(self.predictive_model.parameters())
-        # optimizer =
-        # return optimizer
+        return self.initialize_optimizer(self.head.parameters())
+

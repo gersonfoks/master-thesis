@@ -11,7 +11,7 @@ from ray.tune import CLIReporter
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
 from ray.tune.schedulers import ASHAScheduler
 from torch.utils.data import DataLoader
-from custom_datasets.BayesRiskDatasetLoader import BayesRiskDataset
+from custom_datasets.PreprocessedBayesRiskDatasetLoader import BayesRiskDataset
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 from datetime import datetime
 
@@ -62,7 +62,7 @@ def get_ref_collate_fn(ref_table, pl_model):
     return collate_fn
 
 
-def add_attention_to_feature(name, features):
+def add_mask_to_features(name, features):
     '''
     Adds attention and append features.
     :param name:

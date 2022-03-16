@@ -35,12 +35,7 @@ class NMTBayesRisk(nn.Module):
         for x,y in zip(batch(sources, n=batch_size), batch(samples, n=batch_size)):
             new_scores = self.model.predict(x,y).cpu().numpy().flatten()
             scores += list(new_scores)
-            # if score_type == "avg-std":
-            #     scores += list(avg.cpu().numpy().flatten() - std.cpu().numpy().flatten())
-            # elif score_type == "avg":
-            #     scores += list(avg.cpu().numpy().flatten())
-            # else:
-            #     raise ValueError("not known score type: {}".format(score_type))
+
 
 
         best_index = np.argmax(scores)

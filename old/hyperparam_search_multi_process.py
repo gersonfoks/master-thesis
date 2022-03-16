@@ -11,7 +11,7 @@ from ray.tune import CLIReporter
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
 from ray.tune.schedulers import ASHAScheduler
 from torch.utils.data import DataLoader
-from custom_datasets.BayesRiskDatasetLoader import BayesRiskDataset, BayesRiskDatasetLoader
+from custom_datasets.PreprocessedBayesRiskDatasetLoader import BayesRiskDataset, PreprocessedBayesRiskDatasetLoader
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 from datetime import datetime
 
@@ -72,7 +72,7 @@ def train_model_tune(config, model_config, dataset_config, num_epochs=10, num_gp
     tune.get_trial_dir()
     pl_model = PLPredictiveModelFactory.create_model(config, )
 
-    bayes_risk_dataset = BayesRiskDatasetLoader(dataset_config, pl_model, develop=develop)
+    bayes_risk_dataset = PreprocessedBayesRiskDatasetLoader(dataset_config, pl_model, develop=develop)
     #
     datasets = bayes_risk_dataset.load()
 

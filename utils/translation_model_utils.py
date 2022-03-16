@@ -1,4 +1,5 @@
 import math
+from datetime import datetime
 
 
 def batch(iterable, n=1):
@@ -64,6 +65,7 @@ def batch_sample(model, tokenizer, texts, n_samples=96, batch_size=32):
                 num_return_sequences=n
 
             )
+
         decoded_samples = tokenizer.batch_decode(sample, skip_special_tokens=True)
         samples += decoded_samples
     return samples

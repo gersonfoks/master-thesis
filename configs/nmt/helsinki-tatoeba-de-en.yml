@@ -3,7 +3,7 @@
 name: 'helsinki-tatoeba-de-en'
 model:
   name: 'Helsinki-NLP/opus-mt-de-en'
-  checkpoint: 'data/tatoeba-MLE-1'
+  checkpoint: 'NMT/tatoeba-de-en/model'
   type: 'MarianMT'
 dataset:
   name: 'tatoeba'

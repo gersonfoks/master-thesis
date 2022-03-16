@@ -1,21 +1,21 @@
-import pytorch_lightning as pl
-import torch
 from torch import nn
 
+from custom_loss.GaussianMixtureLoss import GaussianMixtureLoss
 from models.pl_predictive.PLBasePredictiveModel import PLBasePredictiveModel
 
 from transformers import DataCollatorForSeq2Seq
 
 
-class MSEPredictiveModel(PLBasePredictiveModel):
+class GaussianMixturePredictiveModel(PLBasePredictiveModel):
 
     def __init__(self, nmt_model, tokenizer, head, feature_names, initialize_optimizer, feature_map, padding_id=-100,
 
-                 device="cuda", ):
+                 device="cuda", n_mixtures=2):
         super().__init__(nmt_model, tokenizer, head, initialize_optimizer, padding_id=padding_id,
                          device=device, )
 
-        self.criterion = nn.MSELoss()
+        self.n_mixtures = n_mixtures
+        self.criterion = GaussianMixtureLoss(n_mixtures)
 
         self.mode = "text"
 
@@ -27,6 +27,10 @@ class MSEPredictiveModel(PLBasePredictiveModel):
 
         self.feature_map = feature_map
 
+        self.softplus = nn.Softplus()
+
+        self.softmax = nn.Softmax(dim=-1)
+
     def forward(self, input_ids, attention_mask, labels, decoder_input_ids):
 
         features = self.get_features(input_ids, attention_mask, labels, decoder_input_ids)
@@ -34,11 +38,31 @@ class MSEPredictiveModel(PLBasePredictiveModel):
         return self.forward_features(features)
 
     def forward_features(self, features):
-        return self.head.forward(features)
+
+        out = self.head.forward(features)
+        averages = []
+        vars = []
+
+        for i in range(self.n_mixtures):
+        # get the averages.
+            average = out[:, i]
+            averages.append(average)
+        for i in range(self.n_mixtures, 2 * self.n_mixtures):
+            var = self.softplus(out[:, i])
+            vars.append(var)
+
+        x = out[:, 2*self.n_mixtures: 3*self.n_mixtures]
+
+        weights = self.softmax(x)
+        return averages, vars, weights
 
     def get_predicted_risk(self, input_ids, attention_mask, labels, decoder_input_ids):
 
-        return self.forward(input_ids, attention_mask, labels, decoder_input_ids)
+        (average, vars, weights) = self.forward(input_ids, attention_mask, labels, decoder_input_ids)
+        risk = 0
+        for avg, w in zip(average, weights):
+            risk += avg * w
+        return risk
 
     def batch_to_out(self, batch):
 
@@ -47,27 +71,20 @@ class MSEPredictiveModel(PLBasePredictiveModel):
 
             x = {k: v.to("cuda") for k, v in x.items()}
 
-            predicted_risk = self.forward(**x)
+            averages, vars, weights = self.forward(**x)
 
-            utilities = utilities.to("cuda")
-            predicted_risk = predicted_risk.flatten()
-
-            loss = self.criterion(predicted_risk, utilities)
-
-            return {"loss": loss}
 
         else:
             features, (sources, hypothesis), utilities = batch
 
             features = {k: v.to("cuda") for k, v in features.items()}
-            predicted_risk = self.forward_features(features)
+            averages, vars, weights = self.forward_features(features)
 
-            utilities = utilities.to("cuda")
-            predicted_risk = predicted_risk.flatten()
+        utilities = utilities.to("cuda")
 
-            loss = self.criterion(predicted_risk, utilities)
+        loss = self.criterion(averages, utilities, vars, weights)
 
-            return {"loss": loss}
+        return {"loss": loss}
 
     def get_features_batch(self, sources, hypothesis):
 

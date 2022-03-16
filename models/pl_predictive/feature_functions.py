@@ -30,18 +30,50 @@ def get_pooled_features(self, input_ids, attention_mask, labels, decoder_input_i
             }
 
 
-def get_last_layer_features(self, input_ids, attention_mask, labels, decoder_input_ids):
-    nmt_out = self.nmt_model.forward(input_ids=input_ids, attention_mask=attention_mask, labels=labels,
-                                     decoder_input_ids=decoder_input_ids, output_hidden_states=True,
-                                     output_attentions=True)
-    encoder_last_hidden_state = nmt_out["encoder_last_hidden_state"]
-    decoder_last_hidden_state = nmt_out["decoder_hidden_states"][-1]
+class FeatureMap:
 
-    attention_mask_decoder = (self.padding_id != labels).long()
+    def __init__(self, features, padding_id=-100):
+        self.padding_id = padding_id
+        self.features = features
+        self.functions = {
+            "encoder_hidden_state": self.get_encoder_last_hidden_state,
+            "decoder_hidden_state": self.get_decoder_last_hidden_state,
 
-    return {"encoder_last_hidden_state": (encoder_last_hidden_state, attention_mask),
-            "decoder_last_hidden_state": (decoder_last_hidden_state, attention_mask_decoder),
-            }
+        }
+
+    def __call__(self, nmt_in, nmt_out):
+        result = {
+
+        }
+        for feature_name, layers in self.features.items():
+            for layer in layers:
+                feature, mask = self.functions[feature_name](nmt_in, nmt_out, layer)
+
+                name = "{}_{}".format(feature_name, layer)
+                result[name] = feature
+                result["{}_mask".format(name)] = mask
+
+        # result = {feature_name: self.functions[feature_name](nmt_in, nmt_out, layer) for feature_name, layer in self.features.items()}
+        return result
+
+    def get_encoder_last_hidden_state(self, nmt_in, nmt_out, layer):
+
+        return (nmt_out["encoder_hidden_states"][layer], ~nmt_in["attention_mask"].bool())
+
+    def get_decoder_last_hidden_state(self, nmt_in, nmt_out, layer):
+        attention_mask_decoder = (self.padding_id != nmt_in["labels"]).long()
+        return (nmt_out["decoder_hidden_states"][layer], ~attention_mask_decoder.bool())
+
+    def get_decoder_last_hidden_attention(self, nmt_in, nmt_out):
+        # Should check out how to do this. It is a bit confussing
+        raise NotImplementedError()
+
+    def get_feature_names(self):
+        feature_names = []
+        for feature_name, layers in self.features.items():
+            for layer in layers:
+                feature_names.append("{}_{}".format(feature_name, layer))
+        return feature_names
 
 
 def preprocess_function_pooled(self, batch):
@@ -50,8 +82,8 @@ def preprocess_function_pooled(self, batch):
     :param batch:
     :return:
     '''
-    sources = batch["sources"]
-    hypotheses = batch["hypothesis"]
+    sources = batch["source"]
+    hypotheses = batch["hypotheses"]
     with torch.no_grad():
         features = self.get_features_batch(sources, hypotheses)
 
@@ -60,7 +92,7 @@ def preprocess_function_pooled(self, batch):
     return features
 
 
-def apply_attention(layer, attention):
+def remove_padding(layer, padding):
     '''
     Removes the vectors that are not attended to (entries where attention = 0) and returns the numpy array
     :param layer:
@@ -68,7 +100,7 @@ def apply_attention(layer, attention):
     :return:
     '''
     layer = layer.cpu().numpy()
-    attention = attention.cpu().numpy()
+    attention = (~padding).cpu().numpy()
 
     lengths = np.argmin(attention, axis=-1)
 
@@ -84,23 +116,22 @@ def preprocess_function_full(self, batch):
         :param batch:
         :return:
         '''
-    sources = batch["sources"]
-    hypotheses = batch["hypothesis"]
+    sources = batch["source"]
+    hypotheses = batch["hypotheses"]
     with torch.no_grad():
         features = self.get_features_batch(sources, hypotheses)
 
-    features = {k: apply_attention(hidden_layer, attention_mask) for k, (hidden_layer, attention_mask) in
-                features.items()}
+    feature_names = self.feature_names
 
-    return features
+    # Remove the padding
+    result = {}
+    for feature_name in feature_names:
+        result[feature_name] = remove_padding(features[feature_name], features[feature_name + "_mask"])
+
+    return result
 
 
 preprocess_functions = {
     'pooled': preprocess_function_pooled,
     'full': preprocess_function_full,
-}
-
-feature_functions = {
-    'last_layer_pool': get_pooled_features,
-    'last_layer': get_last_layer_features,
 }

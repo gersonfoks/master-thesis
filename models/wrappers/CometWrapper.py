@@ -53,5 +53,5 @@ class CometWrapper:
                 (h, ref_sent_embed, prod_ref, diff_ref, prod_src, diff_src),
                 dim=1, )
 
-            scores.append(self.model.estimator(embedded_sequences))
+            scores.append(self.model.estimator(embedded_sequences).cpu().numpy().flatten())
         return scores

@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 
-class BasePredictiveModel(nn.Module):
+class BaseHead(nn.Module):
 
     def get_risk(self, features):
         '''
@@ -11,3 +11,4 @@ class BasePredictiveModel(nn.Module):
         :return:
         '''
         raise NotImplementedError()
+
