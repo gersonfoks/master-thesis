@@ -53,7 +53,7 @@ class BayesRiskDatasetLoader:
                                                       self.n_hypotheses, self.n_references, )
         if self.develop:
             relative_path += '_develop'
-        relative_path += '.csv'
+        relative_path += '.parquet'
 
 
         return self.path_manager.get_abs_path(relative_path)
