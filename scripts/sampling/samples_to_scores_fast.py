@@ -11,6 +11,8 @@ from custom_datasets.SampleDatasetLoader import SampleDatasetLoader
 
 from models.wrappers.CometWrapper import CometWrapper
 
+print("START this thing")
+
 
 def main():
 
