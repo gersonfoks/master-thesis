@@ -13,6 +13,9 @@ from models.wrappers.CometWrapper import CometWrapper
 
 
 def main():
+
+    print("START scoring the samples")
+
     # Training settings
     parser = argparse.ArgumentParser(description='Give the COMET scores for hypothesis given a reference set')
     parser.add_argument('--develop', dest='develop', action="store_true",
