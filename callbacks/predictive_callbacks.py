@@ -40,3 +40,15 @@ class RankCheckCallback(Callback):
 
     def calc_distance(self, predicted_rank, real_rank):
         return sum(predicted_rank == real_rank)
+
+
+class MyShuffleCallback(Callback):
+    def __init__(self, dataset):
+        super().__init__()
+
+        self.dataset = dataset
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        self.dataset.shuffle()
+
+

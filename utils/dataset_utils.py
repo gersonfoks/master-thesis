@@ -20,30 +20,7 @@ def get_dataset(dataset_name, source='de', target='en'):
     return result
 
 
-def save_pickle(to_pickle, ref):
-    with open(ref, "wb") as f:
-        pickle.dump(to_pickle, f)
 
-
-def load_pickle(ref):
-    r = None
-    with open(ref, "rb") as f:
-        r = pickle.load(f)
-    return r
-
-
-def save_samples(samples, ref):
-    with open("{}".format(ref), "wb") as f:
-        pickle.dump(samples, f)
-
-
-def load_samples(ref):
-    return load_pickle(ref)
-
-
-def save_dict_to_json(dict, ref):
-    with open(ref, 'w') as fp:
-        json.dump(dict, fp, )
 
 
 def get_collate_fn(model, tokenizer, source, target):
@@ -92,3 +69,58 @@ def get_predictive_collate_fn(model, tokenizer, ):
         return x_new, (sources, hypothesis), utilities
 
     return collate_fn
+
+
+
+def get_preprocess_collate_fn(model, tokenizer, ):
+    data_collator = DataCollatorForSeq2Seq(model=model, tokenizer=tokenizer,
+                                           padding=True, return_tensors="pt")
+
+    keys = [
+        "input_ids",
+        "attention_mask",
+        "labels"
+    ]
+
+    def collate_fn(batch):
+
+        new_batch = [{k: s[k] for k in keys} for s in batch]
+        x_new = data_collator(new_batch)
+
+        sources = [s["source"] for s in batch]
+        hypothesis = [s["hypothesis"] for s in batch]
+        counts = [s["count"] for s in batch]
+
+
+        utilities = [s["utilities"] for s in batch]
+
+        return x_new, (sources, hypothesis), utilities, counts
+
+    return collate_fn
+
+
+def save_pickle(to_pickle, ref):
+    with open(ref, "wb") as f:
+        pickle.dump(to_pickle, f)
+
+
+def load_pickle(ref):
+    r = None
+    with open(ref, "rb") as f:
+        r = pickle.load(f)
+    return r
+
+
+def save_samples(samples, ref):
+    with open("{}".format(ref), "wb") as f:
+        pickle.dump(samples, f)
+
+
+def load_samples(ref):
+    return load_pickle(ref)
+
+
+def save_dict_to_json(dict, ref):
+    with open(ref, 'w') as fp:
+        json.dump(dict, fp, )
+

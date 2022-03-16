@@ -1,8 +1,6 @@
-
 import argparse
 import ast
 import torch
-
 
 import pandas as pd
 from comet import download_model, load_from_checkpoint
@@ -12,7 +10,7 @@ from tqdm.contrib import tzip
 
 from utils.translation_model_utils import batch
 from models.wrappers.CometWrapper import CometWrapper
-
+import pytorch_lightning as pl
 
 def counter_to_relative(counter):
     samples_with_freq = [(k, v) for k, v in counter.items()]
@@ -27,12 +25,13 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(description='Test an NMT model')
     parser.add_argument('--ref-dataset', type=str,
-                        default='./data/train_predictive_helsinki-tatoeba-de-en_100.csv',
+                        default='./trained_models/NMT/tatoeba-de-en/data/train_predictive_ancestral_100_develop.csv',
                         help='The references to use')
     parser.add_argument('--hypothesis-dataset', type=str,
-                        default='./data/train_predictive_helsinki-tatoeba-de-en_10.csv',
+                        default='./trained_models/NMT/tatoeba-de-en/data/train_predictive_ancestral_100_develop.csv',
                         help='The hypothesis to use')
-    parser.add_argument("--save-file", type=str, default="./data/train-helsinki-tatoeba-scores.csv")
+    parser.add_argument("--save-file", type=str,
+                        default='./trained_models/NMT/tatoeba-de-en/data/train_predictive_ancestral_scores_100_1000_new.csv')
 
     args = parser.parse_args()
 
@@ -51,55 +50,34 @@ def main():
     # Load the model
     model_path = download_model("wmt21-cometinho-da")
     model = load_from_checkpoint(model_path)
-
-    model.to("cuda")
+    pl.seed_everything(12)
     model.eval()
-    wrapped_model = CometWrapper(model)
 
+    max_count = 1
     with torch.no_grad():
+        c = 0
+        samples = []
         for source, references, hypothesis in tzip(ref_data["source"], ref_data["samples"], hyp_data["samples"]):
-
-            reference_sets = [*references.keys()]
+            c += 1
 
 
             for h, count in hypothesis.items():
 
-                data = [
-
-                ]
-                for reference in reference_sets:
-                    data.append(
-                        {"src": source, "mt": h, "ref": reference}
+                for ref in references:
+                    samples.append(
+                        {"src": source, "mt": h, "ref": ref}
                     )
+            #prepared_samples = self.model.prepare
 
-                # Now we will loop over the data and start predicting the score
+            if max_count <= c:
 
-                for batched_data in batch(data, n=32):
-
-                    # Get the scores
-                    scores = wrapped_model.predict(batched_data, )["score"].flatten().cpu().numpy()
-
-                    # Unwrap the utilities
-                    utilities = {}
-                    for data_point, score in zip(batched_data, scores):
-
-                        if score not in utilities.keys():
-                            utilities[score] = references[data_point["ref"]]
-                        else:
-                            utilities[score] += references[data_point["ref"]]
-
-                # Add the new hypothesis with the counted utilities to the final list
-                new_data_row = {"source": source}
-                new_data_row["hypothesis"] = h
-                new_data_row["utilities"] = utilities
-                new_data_row["count"] = count
-                df = df.append(new_data_row, ignore_index=True)
+                c = 0
+                scores = model.predict(samples, gpus=1, num_workers=0, batch_size=256, progress_bar=True)
+                samples = []
 
 
 
-    print("Saving...")
-    df.to_csv(args.save_file, index=False, sep="\t")
-    print("Done!")
+
 
 
 if __name__ == '__main__':

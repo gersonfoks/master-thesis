@@ -2,64 +2,78 @@
 
 import argparse
 import pytorch_lightning as pl
+import yaml
+
 from torch.utils.data import DataLoader
 
-
-from utils.config_utils import parse_predictive_config, load_model, save_model
-from utils.dataset_utils import get_predictive_collate_fn
-
-
-def get_preprocess_function(tokenizer):
-    def preprocess_function(examples, tokenizer, ):
-        source = examples["source"]
-        targets = examples["hypothesis"]
-        model_inputs = tokenizer(source, truncation=True, )
-        # Setup the tokenizer for targets
-        with tokenizer.as_target_tokenizer():
-            labels = tokenizer(targets, truncation=True, )
-
-        model_inputs["labels"] = labels["input_ids"]
-
-        return model_inputs
-
-    return lambda examples: preprocess_function(examples, tokenizer)
+from callbacks.predictive_callbacks import MyShuffleCallback
+from custom_datasets.PreBayesRiskDataset import PreBayesRiskDatasetLoader
+from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from scripts.Collate import Collator, mean_util, SequenceCollator, util_functions
 
 
 def main():
     # Training settings
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
-    parser.add_argument('--config', type=str, default='./configs/predictive/helsinki-taboeta-de-en-predictive.yml',
+    parser.add_argument('--config', type=str, default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian.yml',
                         help='config to load model from')
+
+    parser.add_argument('--develop', dest='develop', action="store_true",
+                        help='If true uses the develop set (with 100 sources) for fast development')
+
+    parser.set_defaults(develop=False)
 
     args = parser.parse_args()
 
-    parsed_config = parse_predictive_config(args.config, pretrained=False)
-    nmt_model = parsed_config["nmt_model"]
-    pl_model = parsed_config["pl_model"]
-    tokenizer = parsed_config["tokenizer"]
-    train_dataset = parsed_config["train_dataset"]
-    val_dataset = parsed_config["validation_dataset"]
+    with open(args.config, "r") as file:
+        config = yaml.load(file, Loader=yaml.FullLoader)
 
-    preprocess_function = get_preprocess_function(tokenizer)
-    train_dataset = train_dataset.map(preprocess_function, batched=True)
-    val_dataset = val_dataset.map(preprocess_function, batched=True)
+    pl_factory = PLPredictiveModelFactory(config['model_config'])
+    pl_model = pl_factory.create_model()
+    pl_model.set_mode('features')
+    dataset_config = config["dataset"]
 
-    collate_fn = get_predictive_collate_fn(nmt_model, tokenizer, )
+    preprocess_dir = dataset_config["preprocess_dir"] + "{}_{}/".format(dataset_config["n_hypotheses"], dataset_config["n_references"])
 
-    train_dataloader = DataLoader(train_dataset, collate_fn=collate_fn, batch_size=32, shuffle=True, )
-    val_dataloader = DataLoader(val_dataset, collate_fn=collate_fn, batch_size=32, shuffle=False, )
 
-    trainer = pl.Trainer(gpus=1, accumulate_grad_batches=2, max_epochs=10, val_check_interval=0.25)#
 
-    trainer.fit(pl_model, train_dataloader=train_dataloader, val_dataloaders=val_dataloader, )
+    bayes_risk_dataset_loader_train = PreBayesRiskDatasetLoader(preprocess_dir, "train_predictive", pl_model.feature_names,
+                                                   develop=args.develop, max_chunk_size=4096 * 16, repeated_indices=dataset_config["repeated_indices"])
+    bayes_risk_dataset_loader_val = PreBayesRiskDatasetLoader(preprocess_dir, "validation_predictive",
+                                                   pl_model.feature_names,
+                                                   develop=args.develop, max_chunk_size=4096 * 24, repeated_indices=dataset_config["repeated_indices"])
 
-    save_model(pl_model, parsed_config["config"], "./data/develop_model")
+    train_dataset = bayes_risk_dataset_loader_train.load()
+    val_dataset = bayes_risk_dataset_loader_val.load()
 
-    loaded_pl_model = load_model("./data/develop_model", type="MSE")
+    train_dataset.shuffle()
 
-    # Validate new model (just to be sure)
-    trainer.validate(loaded_pl_model, val_dataloaders=val_dataloader, )
+    util_function = util_functions[config['model_config']["loss_function"]]
+
+
+    train_dataloader = DataLoader(train_dataset,
+                                  collate_fn=SequenceCollator(pl_model.feature_names, util_function),
+                                  batch_size=config["batch_size"], shuffle=False, )
+    val_dataloader = DataLoader(val_dataset,
+                                  collate_fn=SequenceCollator(pl_model.feature_names, util_function),
+                                  batch_size=config["batch_size"] * 4, shuffle=False, )
+
+    trainer = pl.Trainer(
+        max_epochs=4,
+        gpus=1,
+        progress_bar_refresh_rate=1,
+        val_check_interval=0.5,
+        callbacks=[MyShuffleCallback(train_dataset)]
+    )
+
+    # create the dataloaders
+    print("train_first")
+
+    trainer.fit(pl_model, train_dataloader=train_dataloader, val_dataloaders=val_dataloader)
+
+    path = './'
+    pl_factory.save(pl_model, path)
 
 
 if __name__ == '__main__':

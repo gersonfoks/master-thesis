@@ -1,10 +1,7 @@
 from torch import nn
 import torch
-import torch.nn.functional as F
-import numpy as np
 
-
-from utils.utils import get_all_word_embeddings, nearest_neigbhor
+from old.utils import get_all_word_embeddings, nearest_neigbhor
 
 from abc import abstractmethod
 

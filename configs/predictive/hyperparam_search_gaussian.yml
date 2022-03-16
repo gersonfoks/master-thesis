@@ -1,0 +1,89 @@
+# Copies the structure of the NTM config, is used for loading the NMT model
+
+dataset:
+  preprocess_dir: 'predictive/tatoeba-de-en/data/preprocessed/'
+  sampling_method: 'ancestral'
+  n_hypotheses: 100
+  n_references: 1000
+  repeated_indices: False
+
+hyperparams:
+  predictive_layers:
+    small:
+      - 4096 # n_queries * n_features * 512 (hidden size) (Read the n_features from features)
+      - 2
+    medium:
+      - 4096 # n_queries * n_features * 512 (hidden size) (Read the n_features from features)
+      - 2048
+      - 2
+    large:
+      - 4096 # n_queries * n_features * 512 (hidden size) (Read the n_features from features)
+      - 2048
+      - 1024
+      - 512
+      - 2
+  activation_function:
+    - 'silu'
+  dropout:
+    type: uniform
+    values:
+      - 0
+      - 0.9
+  lr:
+    type: loguniform
+    values:
+      - 0.00001
+      - 0.1
+  batch_size:
+    - 64
+    - 128
+  weight_decay:
+    type: loguniform
+    values:
+      - 0.00000001
+      - 0.1
+  attention_layers:
+    n_heads:
+      - 4
+      - 8
+      - 16
+    hidden_dim:
+       - 512 # Same as hidden dim of NMT model
+  query_layers: # query layer has the same n_head and hidden_dim as the attention_layers
+    n_queries:
+      - 2
+model_config:
+  loss_function: 'gaussian-full'
+  preprocess_type: 'full'
+  model_type: 'cross_attention'
+  cross_attention_layers:
+    cross_attention: # What to put in the cross attention
+      -
+        - decoder_hidden_state_-1
+        - encoder_hidden_state_-1
+      -
+        - encoder_hidden_state_-1
+        - decoder_hidden_state_-1
+      -
+        - decoder_hidden_state_-1
+        - decoder_hidden_state_-1
+      -
+        - encoder_hidden_state_-1
+        - encoder_hidden_state_-1
+  features:
+    decoder_hidden_state: # Which hidden states to use (-1 is the last one)
+      - -1
+    encoder_hidden_state:
+      - -1
+  nmt_model:
+    model:
+      name: 'Helsinki-NLP/opus-mt-de-en'
+      checkpoint: 'NMT/tatoeba-de-en/model'
+      type: 'MarianMT'
+  optimizer: "adam"
+
+max_epochs: 25
+n_trials: 50
+
+
+

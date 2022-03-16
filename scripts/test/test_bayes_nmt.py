@@ -1,23 +1,31 @@
 ### Script for testing a model
+import argparse
 
 from datasets import tqdm, load_metric, Dataset
 import torch
 
-from models.pl_predictive.NMT_bayes_risk_model import NMTBayesRisk
-from utils.config_utils import load_model
+from models.MBR_model.MBRModel import MBRModel
+
+from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+
 from utils.dataset_utils import get_dataset
 
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Test NMT model with MBR with preselected samples')
+    parser.add_argument('--path', type=str, default='./',
+                        help='path to load the model from')
+    args = parser.parse_args()
 
     data = get_dataset("tatoeba", source="de",
                        target="en")
 
     test_data = Dataset.from_dict(data["test"][:100])
-    print(type(test_data))
-    loaded_pl_model = load_model("./data/develop_model").eval()
-    model = NMTBayesRisk(loaded_pl_model)
+    pl_model, factory = PLPredictiveModelFactory.load(args.path)
+    pl_model.set_mode("text")
+    pl_model.eval()
+    model = MBRModel(pl_model)
 
     sacreblue_metric = load_metric('sacrebleu')
     with torch.no_grad():
@@ -25,11 +33,10 @@ def main():
 
             source = x["translation"]["de"]
             target = [[x["translation"]["en"]]]
+            print("target: ", target)
+            translation = model.forward(source, n_samples_per_source=100)
 
-            translation = model.forward(source, n_samples_per_source=96)
 
-            print(translation)
-            print(target)
 
             sacreblue_metric.add_batch(predictions=[translation], references=target)
         bleu = sacreblue_metric.compute()

@@ -12,26 +12,29 @@ import torch
 
 # What to do:
 from utils.dataset_utils import get_collate_fn
-from utils.translation_model_utils import translate, batch_sample
+from utils.translation_model_utils import batch_sample
 
 
 def main():
     # Training settings
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
-    parser.add_argument('--config', type=str, default='./configs/example.yml',
+    parser.add_argument('--config', type=str, default='./trained_models/NMT/helsinki-tatoeba-de-en.yml',
                         help='config to load model from')
-    parser.add_argument('--n-samples', type=int, default=100, help='number of references for each source')
+    parser.add_argument('--n-samples', type=int, default=10, help='number of references for each source')
     parser.add_argument('--split', type=str, default="train_predictive",
-                        help="Which split to pick (train_predictive or validation_predictive")
-    parser.add_argument('--result-dir', type=str, default="./data/",
-                        help="Where to save the resulting dataset")
-    parser.add_argument('--save-every', type=int, default=100,
-                        help="save the intermediate results every n steps (this to make sure that we can continue if we crash for some reason")
+                        help="Which split to generate samples for (train_predictive, validation_predictive or test")
+
+    parser.add_argument('--develop', dest='develop', action="store_true",
+                        help='If true uses the develop set (with 100 sources) for fast development')
+
+    parser.set_defaults(develop=False)
+
+    parser.add_argument('--base-dir', type=str, default='./trained_models/NMT/tatoeba-de-en/data/')
+
+    parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
 
     args = parser.parse_args()
-
-    save_every = args.save_every
 
     n_samples_needed = args.n_samples
 
@@ -42,13 +45,19 @@ def main():
     model = model.to("cuda")
     model.eval()
 
-    dataset = parsed_config["dataset"][args.split].map(
+    dataset = parsed_config["dataset"][args.split]
+
+    if args.develop:
+        dataset = Dataset.from_dict(dataset[:100])
+        save_file = "{}{}_{}_{}_develop.csv".format(args.base_dir, args.split, args.sampling_method, n_samples_needed,)
+    else:
+        save_file = "{}{}_{}_{}.csv".format(args.base_dir, args.split, args.sampling_method, n_samples_needed)
+
+    dataset = dataset.map(
         parsed_config["preprocess_function"], batched=True)
+
     collate_fn = get_collate_fn(model, tokenizer, parsed_config["config"]["dataset"]["source"],
                                 parsed_config["config"]["dataset"]["target"])
-
-    model_name = parsed_config["config"]["name"]
-    save_file = "{}{}_{}_{}.csv".format(args.result_dir, args.split, model_name, n_samples_needed)
 
     dataloader = DataLoader(dataset, collate_fn=collate_fn, batch_size=1, shuffle=False)
 
@@ -69,13 +78,7 @@ def main():
                 results = results.append({"source": source, "target": target, "samples": counter_samples},
                                          ignore_index=True)
 
-            # Save results every x steps for if we crash
-
-            if (i + 1) % save_every == 0:
-                print("saving file at step: {} to {}".format(i, save_file))
-
-                results.to_csv(save_file, index=False, sep="\t")
-    print("Saving...")
+    print("Saving to {}".format(save_file))
     results.to_csv(save_file, index=False, sep="\t")
     print("Done!")
 

@@ -1,0 +1,65 @@
+# Copies the structure of the NTM config, is used for loading the NMT model
+
+dataset:
+  preprocess_dir: 'predictive/tatoeba-de-en/data/preprocessed/'
+  sampling_method: 'ancestral'
+  n_hypotheses: 10
+  n_references: 100
+  repeated_indices: False
+batch_size: 64
+
+
+model_config:
+  lr: 0.0001
+  weight_decay: 0.001
+  loss_function: 'MSE'
+  preprocess_type: 'full'
+  model_type: 'cross_attention'
+  cross_attention_layers:
+    n_heads: 8
+    hidden_dim: 512
+    cross_attention:
+      -
+        - decoder_hidden_state_-1
+        - encoder_hidden_state_-1
+      -
+        - encoder_hidden_state_-1
+        - decoder_hidden_state_-1
+      -
+        - decoder_hidden_state_-1
+        - decoder_hidden_state_-1
+      -
+        - encoder_hidden_state_-1
+        - encoder_hidden_state_-1
+  query_layers:
+    n_queries: 2
+    n_heads: 8
+    hidden_dim: 512
+  dropout: 0.25
+  features:
+    decoder_hidden_state: # Which hidden states to use
+      - -1
+    encoder_hidden_state: # Which hidden states to use
+      - -1
+  nmt_model:
+    model:
+      name: 'Helsinki-NLP/opus-mt-de-en'
+      checkpoint: 'NMT/tatoeba-de-en/model'
+      type: 'MarianMT'
+  activation_function: 'silu'
+  predictive_layers:
+    - 4096 # n_queries * n_features * 512 (hidden size) (Read the n_features from features)
+    - 2048
+    - 1024
+    - 512
+    - 512
+    - 256
+    - 128
+    - 64
+    - 1
+#    - 4096 # n_queries * n_features * 512 (hidden size) (Read the n_features from features)
+#    - 2048
+#    - 1
+  optimizer: "adam"
+
+
