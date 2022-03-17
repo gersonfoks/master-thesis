@@ -55,9 +55,12 @@ class CometWrapper:
 
         return scores
 
-    def fast_predict_batched(self, source, hypothesis, references, hyp_batch_size=50, ref_batch_size=500):
+    def fast_predict_batched(self, source, hypothesis, references, hyp_batch_size=25, ref_batch_size=500):
 
+        # We need to keep track of the scores for each hypotheses
         scores = [[] for i in range(len(hypothesis))]
+        id_map = {h: i for i, h in enumerate(hypothesis)}
+
         src_inputs = self.model.encoder.prepare_sample([source]).to(self.device)
         src_sent_embed = self.model.get_sentence_embedding(**src_inputs)
         for refs in batch(references, n=ref_batch_size):
@@ -75,18 +78,19 @@ class CometWrapper:
                 hyp_inputs = self.model.encoder.prepare_sample(hyp).to(self.device)
                 hyp_sent_embed = self.model.get_sentence_embedding(**hyp_inputs)
 
-                for i, h in enumerate(hyp_sent_embed):
-                    h = h.unsqueeze(dim=0).repeat(n_refs, 1)
-                    diff_ref = torch.abs(h - ref_sent_embed)
-                    diff_src = torch.abs(h - src_sent_embed_repeated)
+                for h_sent_embed, h in zip(hyp_sent_embed, hyp):
+                    i = id_map[h]
 
-                    prod_ref = h * ref_sent_embed
-                    prod_src = h * src_sent_embed_repeated
+                    h_sent_embed = h_sent_embed.unsqueeze(dim=0).repeat(n_refs, 1)
+                    diff_ref = torch.abs(h_sent_embed - ref_sent_embed)
+                    diff_src = torch.abs(h_sent_embed - src_sent_embed_repeated)
+
+                    prod_ref = h_sent_embed * ref_sent_embed
+                    prod_src = h_sent_embed * src_sent_embed_repeated
 
                     embedded_sequences = torch.cat(
-                        (h, ref_sent_embed, prod_ref, diff_ref, prod_src, diff_src),
+                        (h_sent_embed, ref_sent_embed, prod_ref, diff_ref, prod_src, diff_src),
                         dim=1, )
 
                     scores[i] += list(self.model.estimator(embedded_sequences).cpu().numpy().flatten())
-
         return scores
