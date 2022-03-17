@@ -32,9 +32,7 @@ class CometWrapper:
         src_sent_embed = self.model.get_sentence_embedding(**src_inputs)
         hyp_sent_embed = self.model.get_sentence_embedding(**hyp_inputs)
         ref_sent_embed = self.model.get_sentence_embedding(**ref_inputs)
-        # Get the embedding of the hypothesis
-        # hyp_sent_emb = self.model.compute_sentence_embedding(mt_input_ids, mt_attention_mask)
-        # Get the embedding of the references
+
 
         src_sent_embed = src_sent_embed.repeat(n_refs, 1)
 
@@ -55,7 +53,7 @@ class CometWrapper:
 
         return scores
 
-    def fast_predict_batched(self, source, hypothesis, references, hyp_batch_size=25, ref_batch_size=500):
+    def fast_predict_batched(self, source, hypothesis, references, hyp_batch_size=25, ref_batch_size=250):
 
         # We need to keep track of the scores for each hypotheses
         scores = [[] for i in range(len(hypothesis))]
