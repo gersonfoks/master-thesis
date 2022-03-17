@@ -55,7 +55,7 @@ class CometWrapper:
 
         return scores
 
-    def fast_predict_batched(self, source, hypothesis, references, hyp_batch_size=100, ref_batch_size=500):
+    def fast_predict_batched(self, source, hypothesis, references, hyp_batch_size=50, ref_batch_size=500):
 
         scores = [[] for i in range(len(hypothesis))]
         src_inputs = self.model.encoder.prepare_sample([source]).to(self.device)
@@ -87,8 +87,6 @@ class CometWrapper:
                         (h, ref_sent_embed, prod_ref, diff_ref, prod_src, diff_src),
                         dim=1, )
 
-
                     scores[i] += list(self.model.estimator(embedded_sequences).cpu().numpy().flatten())
-
 
         return scores
