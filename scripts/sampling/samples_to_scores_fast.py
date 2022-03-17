@@ -11,12 +11,10 @@ from custom_datasets.SampleDatasetLoader import SampleDatasetLoader
 
 from models.wrappers.CometWrapper import CometWrapper
 
-print("START this thing")
 
 
 def main():
 
-    print("START scoring the samples")
 
     # Training settings
     parser = argparse.ArgumentParser(description='Give the COMET scores for hypothesis given a reference set')
@@ -70,16 +68,15 @@ def main():
             i += 1
             source = hyp_data["source"]
 
-
             references = ref_data["samples"]
 
             hyp_list = hyp_data["samples"]
 
-            scores = wrapped_model.fast_predict(source, hyp_list, references)
+            scores = wrapped_model.fast_predict_batched(source, hyp_list, references)
 
-            resulting_dataset.add_row(source, hyp_data["target"], hyp_data["samples"], scores, ref_data["count"], hyp_data["count"],
+            resulting_dataset.add_row(source, hyp_data["target"], hyp_data["samples"], scores, ref_data["count"],
+                                      hyp_data["count"],
                                       )
-
 
             pbar.update(1)
 
