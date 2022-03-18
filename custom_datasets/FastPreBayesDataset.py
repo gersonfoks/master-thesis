@@ -179,7 +179,7 @@ class FastPreBayesDatasetLoader:
         return batched_indices
 
     def get_cached_dataset(self):
-        path = self.get_table_dir() + '/data/'
+        path = self.get_table_dir() + 'data/'
         files = os.listdir(path)
         files = sorted(files, key=lambda x: int(x[:-6]))
         cached_tables = []
