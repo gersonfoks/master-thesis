@@ -47,7 +47,7 @@ def main():
 
     dataset_config = config["dataset"]
 
-    gpus_per_trial = 4 if args.on_hpc else 1
+    gpus_per_trial = 1
     tune_asha(config, config["model_config"], dataset_config, develop=args.develop, on_hpc=args.on_hpc,
               smoke_test=args.smoke_test, gpus_per_trial=gpus_per_trial, name=args.name)
 
@@ -79,7 +79,7 @@ def tune_asha(config, model_config, dataset_config, develop=False, on_hpc=False,
                                                     dataset_config=dataset_config,
                                                     develop=develop,
                                                     num_epochs=max_epochs,
-                                                    num_gpus=gpus_per_trial,
+                                                    num_gpus=1,
                                                     on_hpc=on_hpc
                                                     )
 
