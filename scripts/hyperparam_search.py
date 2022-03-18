@@ -84,7 +84,7 @@ def tune_asha(config, model_config, dataset_config, develop=False, on_hpc=False,
                                                     )
 
     # Fix the resources
-    resources_per_trial = {"cpu": 4, "gpu": 1}
+    resources_per_trial = {"cpu": 3, "gpu": 1}
 
     reporter = CLIReporter(
         parameter_columns=list(search_space.keys()),
