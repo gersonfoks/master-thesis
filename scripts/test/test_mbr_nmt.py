@@ -22,20 +22,19 @@ def main():
 
     args = parser.parse_args()
 
-    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references, sampling_method='ancestral')
+    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references,
+                                            sampling_method='ancestral')
 
     dataset = dataset_loader.load(type="pandas")
-
 
     sacreblue_metric = load_metric('sacrebleu')
 
     c = 0
     for row in tqdm(dataset.data.iterrows(), total=5000):
-        c+= 1
-        row = row[1] # Zeroth contains
+        c += 1
+        row = row[1]  # Zeroth contains
 
         target = row["target"]
-
 
         utilities = row["utilities"]
 
@@ -45,7 +44,6 @@ def main():
         best_score = - np.infty
         for i, (h, utils_h) in enumerate(zip(row["hypotheses"], utilities)):
 
-
             mbr_score = np.sum(utils_h * utilities_count)
 
             if mbr_score > best_score:
@@ -53,9 +51,6 @@ def main():
                 best_score = mbr_score
 
         sacreblue_metric.add_batch(predictions=[best_h], references=[[target]])
-
-
-
 
     bleu = sacreblue_metric.compute()
 

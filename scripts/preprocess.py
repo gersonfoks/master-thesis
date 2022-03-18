@@ -53,11 +53,11 @@ def main():
     bayes_risk_dataset_loader = BayesRiskDatasetLoader(args.split, args.n_hypotheses, args.n_references,
                                                        args.sampling_method, args.develop, base=args.dataset_dir)
 
-    bayes_risk_dataset = bayes_risk_dataset_loader.load()
+    bayes_risk_dataset = bayes_risk_dataset_loader.load(type="pandas")
 
     # We want to transform this thing to a extended dataset. We use pandas for this
 
-    df = pd.DataFrame.from_dict(bayes_risk_dataset.data)
+    df = bayes_risk_dataset.data
 
     with open(args.config, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
