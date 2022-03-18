@@ -39,10 +39,10 @@ def main():
 
     parser.add_argument('--save-dir', type=str, default='predictive/tatoeba-de-en/data/preprocessed/')
 
-    parser.add_argument('--n-hypotheses', type=int, default=10, help='Number of hypothesis to use')
+    parser.add_argument('--n-hypotheses', type=int, default=100, help='Number of hypothesis to use')
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
 
-    parser.add_argument('--n-references', type=int, default=100, help='Number of references for each hypothesis')
+    parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
     parser.add_argument('--max-dataset-size', type=int, default=4096 * 8, help='Max number of dataset entries ')
 
     parser.add_argument('--split', type=str, default="train_predictive",

@@ -14,7 +14,7 @@ class BayesRiskDataset(Dataset):
 
         self.n_hypotheses = 10
 
-        if data != None:
+        if type(data) != None:
             self.data = data
         else:
             self.data = {col: [] for col in self.columns}

@@ -1,10 +1,5 @@
-from torch import nn
-import torch
-import torch.nn.functional as F
-import numpy as np
-from utils.pools_utils import max_pooling, average_pooling
 
-# A wrapper for comet (makes predicting faster then when using as described in the documentation of comet.
+import torch
 from utils.translation_model_utils import batch
 
 
@@ -53,7 +48,7 @@ class CometWrapper:
 
         return scores
 
-    def fast_predict_batched(self, source, hypothesis, references, hyp_batch_size=25, ref_batch_size=250):
+    def fast_predict_batched(self, source, hypothesis, references, hyp_batch_size=10, ref_batch_size=100):
 
         # We need to keep track of the scores for each hypotheses
         scores = [[] for i in range(len(hypothesis))]
