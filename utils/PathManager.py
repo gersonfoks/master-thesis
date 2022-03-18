@@ -12,7 +12,7 @@ class PathManager:
         if base_dir_name != 'scratch':
             self.home = os.path.join(str(Path.home()), base_dir_name)
         else:
-            self.home = '/scratch/'
+            self.home = '/scratch/FBR/'
 
     def create_dirs(self, relative_path):
         path = self.get_abs_path(relative_path)
