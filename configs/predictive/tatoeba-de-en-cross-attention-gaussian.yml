@@ -11,7 +11,7 @@ batch_size: 128
 
 model_config:
   lr: 0.0001
-  weight_decay: 0.0
+  weight_decay: 0.001
   loss_function: 'gaussian-full'
   preprocess_type: 'full'
   model_type: 'cross_attention'
@@ -35,7 +35,7 @@ model_config:
     n_queries: 2
     n_heads: 8
     hidden_dim: 512
-  dropout: 0.25
+  dropout: 0.5
   features:
     decoder_hidden_state: # Which hidden states to use
       - -1

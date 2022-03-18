@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from callbacks.predictive_callbacks import MyShuffleCallback
 from custom_datasets.PreBayesRiskDataset import PreBayesRiskDatasetLoader
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
-from scripts.Collate import Collator, mean_util, SequenceCollator, util_functions
+from scripts.Collate import SequenceCollator, util_functions
 
 
 def main():
@@ -72,7 +72,8 @@ def main():
 
     trainer.fit(pl_model, train_dataloader=train_dataloader, val_dataloaders=val_dataloader)
 
-    path = './'
+
+    path = './tatoeba-de-en/'
     pl_factory.save(pl_model, path)
 
 

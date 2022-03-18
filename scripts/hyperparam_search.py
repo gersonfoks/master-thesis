@@ -16,7 +16,7 @@ from callbacks.predictive_callbacks import MyShuffleCallback
 from custom_datasets.FastPreBayesDataset import FastPreBayesDatasetLoader
 
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
-from scripts.Collate import Collator, mean_util, SequenceCollator, util_functions
+from scripts.Collate import SequenceCollator, util_functions
 
 
 def main():
@@ -28,7 +28,18 @@ def main():
     parser.add_argument('--develop', dest='develop', action="store_true",
                         help='If true uses the develop set (with 100 sources) for fast development')
 
+    parser.add_argument('--on-hpc', dest='on_hpc', action="store_true",
+                        help='If true we are on LISA hpc')
+
+    parser.add_argument('--smoke-test', dest='smoke_test', action="store_true",
+                        help='If true we are performing a test to see if everything runs as it should')
+
+    parser.add_argument('--name', type=str, default='hyperparam-search',
+                        help='name of the hyperparameter search')
+
     parser.set_defaults(develop=False)
+    parser.set_defaults(on_hpc=False)
+    parser.set_defaults(smoke_test=False)
 
     args = parser.parse_args()
     with open(args.config, "r") as file:
@@ -36,30 +47,44 @@ def main():
 
     dataset_config = config["dataset"]
 
-    tune_asha(config, config["model_config"], dataset_config, develop=args.develop)
+    gpus_per_trial = 4 if args.on_hpc else 1
+    tune_asha(config, config["model_config"], dataset_config, develop=args.develop, on_hpc=args.on_hpc,
+              smoke_test=args.smoke_test, gpus_per_trial=gpus_per_trial, name=args.name)
 
 
-def tune_asha(config, model_config, dataset_config, develop=False, gpus_per_trial=1,
-              data_dir="~/temp"):
+def tune_asha(config, model_config, dataset_config, develop=False, on_hpc=False, smoke_test=False, gpus_per_trial=1,
+              name="name"):
     # First create the search space
     search_space = create_search_space(config["hyperparams"])
 
+    # Set numbers to something small to test if everything works.
+    if smoke_test:
+        grace_period = 1
+        max_t = 2
+        n_trials = 4
+        max_epochs = 2
+    else:
+        grace_period = config["grace_period"]
+        max_t = config["max_epochs"]
+        max_epochs = config["max_epochs"]
+        n_trials = config["n_trials"]
+
     scheduler = ASHAScheduler(
-        max_t=config["max_epochs"],
-        grace_period=2,
-        reduction_factor=2,
+        max_t=max_t,
+        grace_period=grace_period,
     )
     # Fix the fixed params
     train_fn_with_parameters = tune.with_parameters(train_model_tune,
                                                     model_config=model_config,
                                                     dataset_config=dataset_config,
                                                     develop=develop,
-                                                    num_epochs=config["max_epochs"],
+                                                    num_epochs=max_epochs,
                                                     num_gpus=gpus_per_trial,
-                                                    data_dir=data_dir)
+                                                    on_hpc=on_hpc
+                                                    )
 
     # Fix the resources
-    resources_per_trial = {"cpu": 8, "gpu": gpus_per_trial}
+    resources_per_trial = {"cpu": 4, "gpu": 1}
 
     reporter = CLIReporter(
         parameter_columns=list(search_space.keys()),
@@ -70,10 +95,10 @@ def tune_asha(config, model_config, dataset_config, develop=False, gpus_per_tria
                         metric="val_loss",
                         mode="min",
                         config=search_space,
-                        num_samples=config["n_trials"],
+                        num_samples=n_trials,
                         scheduler=scheduler,
                         progress_reporter=reporter,
-                        name="tune-test")
+                        name=name)
 
     print("Best hyperparameters found were: ", analysis.best_config)
 
@@ -134,8 +159,7 @@ def combine_hyperparameters_and_config(hyperparams, fixed_model_config):
     return result
 
 
-def train_model_tune(hyperparams, model_config, dataset_config, num_epochs=15, num_gpus=1, develop=False,
-                     data_dir='~/temp'):
+def train_model_tune(hyperparams, model_config, dataset_config, num_epochs=15, num_gpus=1, develop=False, on_hpc=False):
     # First we parse the config
 
     # Combine the hyperparams with the model config
@@ -147,14 +171,21 @@ def train_model_tune(hyperparams, model_config, dataset_config, num_epochs=15, n
     preprocess_dir = dataset_config["preprocess_dir"] + "{}_{}/".format(dataset_config["n_hypotheses"],
                                                                         dataset_config["n_references"])
 
+    if on_hpc:
+        max_tables = 10
+    else:
+        max_tables = 6
+
     bayes_risk_dataset_loader_train = FastPreBayesDatasetLoader(preprocess_dir, "train_predictive",
                                                                 pl_model.feature_names,
-                                                                develop=develop, max_tables=4,
-                                                                repeated_indices=dataset_config["repeated_indices"])
+                                                                develop=develop, max_tables=max_tables,
+                                                                repeated_indices=dataset_config["repeated_indices"],
+                                                                on_hpc=on_hpc)
     bayes_risk_dataset_loader_val = FastPreBayesDatasetLoader(preprocess_dir, "validation_predictive",
                                                               pl_model.feature_names,
-                                                              develop=develop, max_tables=4,
-                                                              repeated_indices=dataset_config["repeated_indices"])
+                                                              develop=develop, max_tables=max_tables,
+                                                              repeated_indices=dataset_config["repeated_indices"],
+                                                              on_hpc=on_hpc)
 
     train_dataset = bayes_risk_dataset_loader_train.load()
     val_dataset = bayes_risk_dataset_loader_val.load()
@@ -170,16 +201,17 @@ def train_model_tune(hyperparams, model_config, dataset_config, num_epochs=15, n
                                 collate_fn=SequenceCollator(pl_model.feature_names, util_function),
                                 batch_size=hyperparams["batch_size"], shuffle=False, )
 
-    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="min",
+    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=True, mode="min",
                                         check_finite=True,
                                         divergence_threshold=5)
 
+    progress_bar_refresh_rate = 0 if on_hpc else 1
     trainer = pl.Trainer(
         max_epochs=num_epochs,
         gpus=math.ceil(num_gpus),
         logger=TensorBoardLogger(
             save_dir=tune.get_trial_dir(), name="", version="."),
-        progress_bar_refresh_rate=1,
+        progress_bar_refresh_rate=progress_bar_refresh_rate,
         callbacks=[
             TuneReportCallback(
                 {

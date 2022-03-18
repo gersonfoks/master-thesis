@@ -12,7 +12,7 @@ from callbacks.predictive_callbacks import MyShuffleCallback
 from custom_datasets.FastPreBayesDataset import FastPreBayesDatasetLoader
 
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
-from scripts.Collate import Collator, mean_util, SequenceCollator, util_functions
+from scripts.Collate import SequenceCollator, util_functions
 from utils.PathManager import get_path_manager
 
 
@@ -45,7 +45,7 @@ def main():
 
     bayes_risk_dataset_loader_train = FastPreBayesDatasetLoader(preprocess_dir, "train_predictive",
                                                                 pl_model.feature_names,
-                                                                develop=args.develop, max_tables=3,
+                                                                develop=args.develop, max_tables=4,
                                                                 repeated_indices=dataset_config["repeated_indices"])
     bayes_risk_dataset_loader_val = FastPreBayesDatasetLoader(preprocess_dir, "validation_predictive",
                                                               pl_model.feature_names,
@@ -66,7 +66,8 @@ def main():
 
     path_manager = get_path_manager()
 
-    path = path_manager.get_abs_path('')
+    path = path_manager.get_abs_path('predictive/tatoeba-de-en/models/')
+
     checkpoint_callback = CheckpointCallback(pl_factory, path)
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="min",
                                         check_finite=True,
@@ -74,7 +75,7 @@ def main():
     trainer = pl.Trainer(
         max_epochs=20,
         gpus=1,
-        progress_bar_refresh_rate=0,
+        progress_bar_refresh_rate=1,
         val_check_interval=0.5,
         callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, early_stop_callback]
     )
