@@ -5,7 +5,7 @@ dataset:
   sampling_method: 'ancestral'
   n_hypotheses: 100
   n_references: 1000
-  repeated_indices: True
+  repeated_indices: True # True if we allow that hypotheses to be repeated multiple times else False
 
 hyperparams:
   predictive_layers:

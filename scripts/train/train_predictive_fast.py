@@ -22,7 +22,7 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
-    parser.add_argument('--config', type=str, default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian.yml',
+    parser.add_argument('--config', type=str, default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-best.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -73,7 +73,7 @@ def main():
                                         check_finite=True,
                                         divergence_threshold=3)
     trainer = pl.Trainer(
-        max_epochs=20,
+        max_epochs=25,
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,

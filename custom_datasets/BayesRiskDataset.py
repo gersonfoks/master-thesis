@@ -34,4 +34,6 @@ class BayesRiskDataset(Dataset):
         self.data['count'].append(count)
 
     def __getitem__(self, item):
+
         return {col: self.data[col][item] for col in self.columns}
+

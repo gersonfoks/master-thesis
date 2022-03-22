@@ -28,7 +28,7 @@ def collate_fn(batch):
 def main():
     parser = argparse.ArgumentParser(description='Preprocesses a dataset')
 
-    parser.add_argument('--config', type=str, default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian.yml',
+    parser.add_argument('--config', type=str, default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-best.yml',
                         help='config to load model from')
     parser.add_argument('--develop', dest='develop', action="store_true",
                         help='If true uses the develop set (with 100 sources) for fast development')

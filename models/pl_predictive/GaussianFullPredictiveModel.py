@@ -19,7 +19,7 @@ class CustomGaussianNLLLoss(nn.Module):
 
         log_p = td.Independent(td.Normal(loc, scale), 1).log_prob(utilities)
         loss = -log_p.mean(0)
-        # Normalize to easier interprete results
+        # Normalize to easier interpret the results
         return loss * 1/utilities.shape[-1]
 
 

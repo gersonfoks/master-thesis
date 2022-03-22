@@ -88,9 +88,9 @@ class PLBasePredictiveModel(pl.LightningModule):
 
         labels = labels * ~is_padding + self.padding_id * is_padding
 
-        predicted_risk = self.get_predicted_risk(input_ids, attention_mask, labels, decoder_input_ids)
+        model_out = self.forward(input_ids, attention_mask, labels, decoder_input_ids)
 
-        return predicted_risk
+        return model_out
 
     def configure_optimizers(self):
         return self.initialize_optimizer(self.head.parameters())
