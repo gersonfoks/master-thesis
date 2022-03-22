@@ -22,13 +22,19 @@ def main():
     # Training settings
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
-    parser.add_argument('--config', type=str, default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-best.yml',
+    parser.add_argument('--config', type=str,
+                        default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-best.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",
                         help='If true uses the develop set (with 100 sources) for fast development')
 
     parser.set_defaults(develop=False)
+
+    parser.add_argument('--on-hpc', dest='on_hpc', action="store_true",
+                        help='If true uses the develop set (with 100 sources) for fast development')
+
+    parser.set_defaults(on_hpc=False)
 
     args = parser.parse_args()
 
@@ -43,14 +49,23 @@ def main():
     preprocess_dir = dataset_config["preprocess_dir"] + "{}_{}/".format(dataset_config["n_hypotheses"],
                                                                         dataset_config["n_references"])
 
+    if args.on_hpc:
+        train_max_tables = 10
+        val_max_tables = 10
+    else:
+        train_max_tables = 4
+        val_max_tables = 6
+
     bayes_risk_dataset_loader_train = FastPreBayesDatasetLoader(preprocess_dir, "train_predictive",
                                                                 pl_model.feature_names,
-                                                                develop=args.develop, max_tables=4,
-                                                                repeated_indices=dataset_config["repeated_indices"])
+                                                                develop=args.develop, max_tables=train_max_tables,
+                                                                repeated_indices=dataset_config["repeated_indices"],
+                                                                on_hpc=args.on_hpc)
     bayes_risk_dataset_loader_val = FastPreBayesDatasetLoader(preprocess_dir, "validation_predictive",
                                                               pl_model.feature_names,
-                                                              develop=args.develop, max_tables=6,
-                                                              repeated_indices=dataset_config["repeated_indices"])
+                                                              develop=args.develop, max_tables=val_max_tables,
+                                                              repeated_indices=dataset_config["repeated_indices"],
+                                                              on_hpc=args.on_hpc)
 
     train_dataset = bayes_risk_dataset_loader_train.load()
     val_dataset = bayes_risk_dataset_loader_val.load()

@@ -28,6 +28,10 @@ class MBRModel(torch.nn.Module):
             scores += list(risks)
         return scores
 
+
+    def get_model_out(self, sources, samples, batch_size=16):
+        pass
+
     def get_best(self, source, hypotheses, batch_size=16):
         sources = [source] * len(hypotheses)
 
