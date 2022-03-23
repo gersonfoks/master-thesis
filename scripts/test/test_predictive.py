@@ -7,7 +7,6 @@ from datasets import load_metric
 from tqdm import tqdm
 
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
-import numpy as np
 
 from models.MBR_model.MBRModel import MBRModel
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
@@ -22,7 +21,7 @@ def main():
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
 
     split = 'test'
-    path = "C:/Users/gerso/Desktop/results/hyperparam_search/train_model_tune_48132_00043_43_activation_function=silu,batch_size=128,dropout=0.53824,hidden_dim=512,lr=1.7855e-05,n_heads=8,n_q_2022-03-19_07-07-38/21/"
+    path = "C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/best_100_1000_no_repeat/"
     args = parser.parse_args()
 
     dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references,

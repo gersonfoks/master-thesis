@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-best.yml',
+                        default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-mixture.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -32,7 +32,7 @@ def main():
     parser.set_defaults(develop=False)
 
     parser.add_argument('--on-hpc', dest='on_hpc', action="store_true",
-                        help='If true uses the develop set (with 100 sources) for fast development')
+                        help='Set to true if we are on a hpc')
 
     parser.set_defaults(on_hpc=False)
 
@@ -87,6 +87,8 @@ def main():
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="min",
                                         check_finite=True,
                                         divergence_threshold=3)
+
+
     trainer = pl.Trainer(
         max_epochs=25,
         gpus=1,

@@ -28,9 +28,12 @@ class MBRModel(torch.nn.Module):
             scores += list(risks)
         return scores
 
-
     def get_model_out(self, sources, samples, batch_size=16):
-        pass
+        result = {}
+        for x, y in zip(batch(sources, n=batch_size), batch(samples, n=batch_size)):
+            model_out = self.predictive_model.predict(x, y)
+            result = self.add_model_out_to_result(result, model_out)
+        return result
 
     def get_best(self, source, hypotheses, batch_size=16):
         sources = [source] * len(hypotheses)
@@ -45,4 +48,13 @@ class MBRModel(torch.nn.Module):
 
     # TODO make this more general
     def model_out_to_risk(self, model_out):
+
         return model_out[0].cpu().numpy().flatten()
+
+    def add_model_out_to_result(self, result, model_out):
+        if result == {}:
+            result["loc"] = []
+            result["scale"] = []
+        result['loc'] += list(model_out[0].cpu().numpy().flatten())
+        result['scale'] += list(model_out[1].cpu().numpy().flatten())
+        return result

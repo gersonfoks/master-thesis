@@ -1,21 +1,31 @@
-import torch
-from torch.nn import Module
+# Inspiration from: https://colab.research.google.com/drive/19-APMZs6LX-iQnjQfEpFXbjMSWs5c4ub?usp=sharing
 
 
-class GaussianMixtureLoss(Module):
+from torch import nn
+import torch.distributions as td
 
-    def __init__(self, n_mixtures=2):
+
+class GaussianMixtureLoss(nn.Module):
+
+    def __init__(self):
         super().__init__()
+        # We add a small number to make sure that the scale is never zero
+        self.eps = 1e-6
 
-        self.n_mixtures = n_mixtures
-        self.gaussian_loss = torch.nn.GaussianNLLLoss(full=True, reduction='none')
+    def forward(self, loc, utilities, scale, logits):
+        scale = scale + self.eps
 
-    def forward(self, averages, targets, vars, weights):
-        loss = 0
-        for i, (average, var) in enumerate(zip(averages, vars)):
-            gauss_loss = self.gaussian_loss(average, targets, var, )
+        components = self.make_components(loc, scale, utilities.shape[-1])
 
-            loss += weights[:, i] * gauss_loss
+        mixture = td.MixtureSameFamily(td.Categorical(logits=logits), components)
 
-        loss = torch.mean(loss)
-        return loss
+        log_p = mixture.log_prob(utilities)
+        loss = -log_p.mean(0)
+        # Divide by the number of independent samples to make the interpretation of the results easier*
+        return loss / utilities.shape[-1]
+
+    def make_components(self, loc, scale, sample_size):
+        shape = loc.shape
+        loc = loc.unsqueeze(-1).repeat((1,) * len(shape) + (sample_size,))
+        scale = scale.unsqueeze(-1).repeat((1,) * len(shape) + (sample_size,))
+        return td.Independent(td.Normal(loc=loc, scale=scale), 1)
