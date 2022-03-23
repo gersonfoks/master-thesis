@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-mixture.yml',
+                        default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-mixture-4.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -81,7 +81,7 @@ def main():
 
     path_manager = get_path_manager()
 
-    path = path_manager.get_abs_path('predictive/tatoeba-de-en/models/')
+    path = path_manager.get_abs_path('predictive/tatoeba-de-en/models/gaussian_mixture/')
 
     checkpoint_callback = CheckpointCallback(pl_factory, path)
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="min",

@@ -21,7 +21,7 @@ class GaussianMixtureLoss(nn.Module):
 
         log_p = mixture.log_prob(utilities)
         loss = -log_p.mean(0)
-        # Divide by the number of independent samples to make the interpretation of the results easier*
+        # Divide by the number of independent samples to make the interpretation of the results easier
         return loss / utilities.shape[-1]
 
     def make_components(self, loc, scale, sample_size):

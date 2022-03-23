@@ -8,7 +8,8 @@ from tqdm import tqdm
 
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
 
-from models.MBR_model.MBRModel import MBRModel
+from models.MBR_model.GaussianMBRModel import GaussianMBRModel
+from models.MBR_model.GaussianMixtureMBRModel import GaussianMixtureMBRModel
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 
 
@@ -21,7 +22,7 @@ def main():
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
 
     split = 'test'
-    path = "C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/best_100_1000_no_repeat/"
+    path = "C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/temp_mixture_model/"
     args = parser.parse_args()
 
     dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references,
@@ -34,7 +35,7 @@ def main():
     pl_model, factory = PLPredictiveModelFactory.load(path)
 
     pl_model.eval()
-    model = MBRModel(pl_model)
+    model = GaussianMixtureMBRModel(pl_model)
 
     c = 0
     for row in tqdm(dataset.data.iterrows(), total=5000):
