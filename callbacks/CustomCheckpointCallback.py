@@ -23,7 +23,7 @@ class CheckpointCallback(Callback):
 
         path = self.path + str(self.counter) + '/'
 
-        if trainer.logged_metrics["epoch"].cpu().item() > 0:
+        if self.metric in trainer.logged_metrics.keys():
 
             self.factory.save(pl_module, path)
 
@@ -33,8 +33,7 @@ class CheckpointCallback(Callback):
                 self.model_loss.sort(key=lambda x: x[0], reverse=False)
 
                 to_delete = self.model_loss[self.top_k:]
-                print(to_delete)
-                print(self.model_loss)
+
                 for (val, path) in to_delete:
 
                     if os.path.exists(path):
