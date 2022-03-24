@@ -1,10 +1,10 @@
-# File to train a model from scratch
+# Train a model with no overfitting countermeasures as a sanity check
 
 import argparse
 import pytorch_lightning as pl
 import yaml
 import numpy as np
-from pytorch_lightning.callbacks import EarlyStopping
+
 from torch.utils.data import DataLoader
 
 from callbacks.CustomCheckpointCallback import CheckpointCallback
@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-mixture-4.yml',
+                        default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-mixture-2-sanity-check.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -81,12 +81,10 @@ def main():
 
     path_manager = get_path_manager()
 
-    path = path_manager.get_abs_path('predictive/tatoeba-de-en/models/gaussian_mixture/')
+    path = path_manager.get_abs_path('predictive/tatoeba-de-en/models/gaussian_mixture_sanity_check/')
 
-    checkpoint_callback = CheckpointCallback(pl_factory, path)
-    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="min",
-                                        check_finite=True,
-                                        divergence_threshold=3)
+    checkpoint_callback = CheckpointCallback(pl_factory, path, metric="train_loss")
+
 
 
     trainer = pl.Trainer(
@@ -94,7 +92,7 @@ def main():
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,
-        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, early_stop_callback]
+        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback,]
     )
 
     # create the dataloaders

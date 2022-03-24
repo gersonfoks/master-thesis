@@ -57,7 +57,7 @@ class GaussianMixtureMBRModel(BaseMBRModel):
         mixture = self.get_mixture(model_out["loc"], model_out["scale"], model_out["logits"])
 
         sample_scores = mixture.sample()
-
+        print(sample_scores.shape)
         mean = sample_scores.mean(-1)
         return mean
 
