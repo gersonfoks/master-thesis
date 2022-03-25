@@ -14,6 +14,7 @@ class BaseMBRModel(torch.nn.Module):
         self.device_name = device
         self.predictive_model = predictive_model.to(self.device_name)
 
+
     def forward(self, source, n_samples_per_source=256, batch_size=16, ):
         hypotheses = batch_sample(self.predictive_model.nmt_model, self.predictive_model.tokenizer, [source],
                                   n_samples=n_samples_per_source, )

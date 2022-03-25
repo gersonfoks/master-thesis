@@ -17,6 +17,7 @@ class GaussianMixtureMBRModel(BaseMBRModel):
         self.device_name = device
         self.predictive_model = predictive_model.to(self.device_name)
         self.sample_size = sample_size
+        self.predictive_model.eval()
 
     def forward(self, source, n_samples_per_source=256, batch_size=16, ):
         hypotheses = batch_sample(self.predictive_model.nmt_model, self.predictive_model.tokenizer, [source],
@@ -53,12 +54,20 @@ class GaussianMixtureMBRModel(BaseMBRModel):
         return best
 
     def model_out_to_risk(self, model_out):
+        return self.model_out_to_mean(model_out)
 
+    def get_mean(self, sources, samples, batch_size=16, n_samples=1000):
+        model_out = self.get_model_out(sources, samples, batch_size=batch_size)
+        mean = self.model_out_to_mean(model_out, n_samples=n_samples)
+        return mean
+
+    def model_out_to_mean(self, model_out, n_samples=1000):
         mixture = self.get_mixture(model_out["loc"], model_out["scale"], model_out["logits"])
 
-        sample_scores = mixture.sample()
-        print(sample_scores.shape)
-        mean = sample_scores.mean(-1)
+        sample_scores = mixture.sample((n_samples,))
+
+        mean = sample_scores.mean(0)
+
         return mean
 
     def add_model_out_to_result(self, result, model_out):
@@ -73,14 +82,19 @@ class GaussianMixtureMBRModel(BaseMBRModel):
         return result
 
     def get_mixture(self, loc, scale, logits):
-        components = self.make_components(loc, scale)
-
+        components = self.make_components(loc, scale,)
         mixture = td.MixtureSameFamily(td.Categorical(logits=logits), components)
+
         return mixture
 
     def make_components(self, loc, scale):
-        sample_size = self.sample_size
-        shape = loc.shape
-        loc = loc.unsqueeze(-1).repeat((1,) * len(shape) + (sample_size,))
-        scale = scale.unsqueeze(-1).repeat((1,) * len(shape) + (sample_size,))
+        loc = loc.unsqueeze(-1)
+        scale = scale.unsqueeze(-1)
         return td.Independent(td.Normal(loc=loc, scale=scale), 1)
+
+
+    # def make_components(self, loc, scale, sample_size):
+    #     shape = loc.shape
+    #     loc = loc.unsqueeze(-1).repeat((1,) * len(shape) + (sample_size,))
+    #     scale = scale.unsqueeze(-1).repeat((1,) * len(shape) + (sample_size,))
+    #     return td.Independent(td.Normal(loc=loc, scale=scale), 1)
