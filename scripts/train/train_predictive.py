@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-cross-attention-student-t-mixture-3.yml',
+                        default='./configs/predictive/tatoeba-de-en-cross-attention-MSE.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",

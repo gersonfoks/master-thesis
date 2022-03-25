@@ -36,11 +36,11 @@ def full_util(utilities, count):
 
 
 util_functions = {
-    'gaussian': random_util,
-    'gaussian-mixture': random_util,
-    'gaussian-full': full_util,
-    'student-t-mixture': full_util,
-    'MSE': mean_util,
+    'gaussian': lambda x: x,
+    'gaussian-mixture': lambda x: x,
+    'gaussian-full': lambda x: x,
+    'student-t-mixture': lambda x: x,
+    'MSE': lambda x: np.mean(x,axis=-1),
 }
 
 
@@ -76,10 +76,10 @@ class SequenceCollator:
     def __call__(self, batch):
         # First get the features
 
-        utilities = np.stack([s["utilities"] for s in batch])
+        utilities = self.util_func(np.stack([s["utilities"] for s in batch]))
 
         #utilities = np.ones((len(batch), 100)) #np.stack([ np.array(s["utilities"]) for s in batch])
-        utilities = torch.tensor(utilities)
+        utilities = torch.tensor(utilities, dtype=torch.float32)
 
         sources = [s["source"] for s in batch]
         hypotheses = [s["hypothesis"] for s in batch]
