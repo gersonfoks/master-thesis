@@ -39,6 +39,7 @@ util_functions = {
     'gaussian': random_util,
     'gaussian-mixture': random_util,
     'gaussian-full': full_util,
+    'student-t-mixture': full_util,
     'MSE': mean_util,
 }
 

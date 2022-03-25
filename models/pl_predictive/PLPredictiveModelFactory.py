@@ -5,10 +5,11 @@ import os
 
 import transformers
 
-from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
+
 from models.pl_predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
 from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
 from models.pl_predictive.MSEPredictiveModel import MSEPredictiveModel
+from models.pl_predictive.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
 from models.pl_predictive.feature_functions import preprocess_functions, FeatureMap
 from models.predictive_head.HeadFactory import HeadFactory
 
@@ -74,12 +75,15 @@ class PLPredictiveModelFactory:
                                                feature_map)
 
         elif self.config["loss_function"] == "gaussian-mixture":
-            print("using a mixture model")
+            print("using a gaussian mixture model")
             pl_model = GaussianMixturePredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
                                                       feature_map, n_mixtures=self.config["n_mixtures"])
-        elif self.config["loss_function"] == "gaussian-full":
-            print("using a full model")
+        elif self.config["loss_function"] == "gaussian":
             pl_model = GaussianPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
+                                               feature_map, )
+        elif self.config["loss_function"] == "student-t-mixture":
+            print("using a student-t mixture model")
+            pl_model = StudentTMixturePredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
                                                feature_map, )
         else:
             raise ValueError("Not a known type: {}".format(self.config["type"]))
