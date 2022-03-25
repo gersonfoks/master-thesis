@@ -4,20 +4,19 @@ dataset:
   preprocess_dir: 'predictive/tatoeba-de-en/data/preprocessed/'
   sampling_method: 'ancestral'
   n_hypotheses: 100
-  n_references: 100
+  n_references: 1000
   repeated_indices: False
-batch_size: 64
+batch_size: 128
 
 
 model_config:
-  lr: 0.0001
-  weight_decay: 0.0
+  lr: 1.4815897489348615e-05
+  weight_decay: 1.001726887106992e-06
   loss_function: 'gaussian-mixture'
-  n_mixtures: 4
   preprocess_type: 'full'
   model_type: 'cross_attention'
   cross_attention_layers:
-    n_heads: 8
+    n_heads: 4
     hidden_dim: 512
     cross_attention:
       -
@@ -34,9 +33,9 @@ model_config:
         - encoder_hidden_state_-1
   query_layers:
     n_queries: 2
-    n_heads: 8
+    n_heads: 4
     hidden_dim: 512
-  dropout: 0.25
+  dropout: 0.6712665889822903
   features:
     decoder_hidden_state: # Which hidden states to use
       - -1
@@ -53,14 +52,8 @@ model_config:
     - 2048
     - 1024
     - 512
-    - 512
-    - 256
-    - 128
-    - 64
-    - 12 # 2 * 1 average and 1 var + 2 times a weight.
-#    - 4096 # n_queries * n_features * 512 (hidden size) (Read the n_features from features)
-#    - 2048
-#    - 1
+    - 6 # Mixture of 2 times loc, 2 times scale 2 choices
   optimizer: "adam"
+  n_mixtures: 2
 
 

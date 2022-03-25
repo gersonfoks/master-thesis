@@ -7,9 +7,12 @@ import os
 
 class PathManager:
 
-    def __init__(self, base_dir_name='FBR'):
+    def __init__(self, base_dir_name='FBR', ):
         # base dir
-        self.home = os.path.join(str(Path.home()), base_dir_name)
+        if base_dir_name != 'scratch':
+            self.home = os.path.join(str(Path.home()), base_dir_name)
+        else:
+            self.home = '/scratch/FBR/'
 
     def create_dirs(self, relative_path):
         path = self.get_abs_path(relative_path)
@@ -22,8 +25,5 @@ class PathManager:
 path_manager = None
 
 
-def get_path_manager(base_dir_name='FBR'):
-    if path_manager:
-        return path_manager
-    else:
-        return PathManager(base_dir_name=base_dir_name)
+def get_path_manager(base_dir_name='FBR', ):
+    return PathManager(base_dir_name=base_dir_name, )

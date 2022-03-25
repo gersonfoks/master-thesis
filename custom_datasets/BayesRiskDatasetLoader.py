@@ -33,11 +33,13 @@ class BayesRiskDatasetLoader:
 
         self.dataset = None
 
-    def load(self):
+    def load(self, type="pydict"):
         path = self.get_dataset_path()
         table = pq.read_table(path)
-
-        self.dataset = BayesRiskDataset(table.to_pydict(), self.split, self.n_hypotheses)
+        if type == "pydict":
+            self.dataset = BayesRiskDataset(table.to_pydict(), self.split, self.n_hypotheses)
+        else:
+            self.dataset = BayesRiskDataset(table.to_pandas(), self.split, self.n_hypotheses)
         return self.dataset
 
     def load_empty(self):

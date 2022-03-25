@@ -12,7 +12,7 @@ from utils.PathManager import get_path_manager
 class PreBayesRiskDataset(Dataset):
 
     def __init__(self, indices, start_end_indices, features, dataset_location, max_chunk_size=4096 * 8,
-                 split="train_predictive", develop=False):
+                 split="train_predictive", develop=False, on_hpc=False):
         # Create a mapping from indices to sub datasets
         self.develop = develop
         self.tables = None
@@ -37,8 +37,13 @@ class PreBayesRiskDataset(Dataset):
 
         self.dataset_location = dataset_location
 
+        self.on_hpc = on_hpc
+
         self.first_load = True
-        self.path_manager = get_path_manager()
+        if on_hpc:
+            self.path_manager = get_path_manager('scratch')
+        else:
+            self.path_manager = get_path_manager()
         self.construct_table_id_map()
 
         self.shuffle()
@@ -54,7 +59,6 @@ class PreBayesRiskDataset(Dataset):
     def shuffle(self):
 
         np.random.shuffle(self.table_id_map)
-
 
     def load_next_chunk(self):
         print("loading next chunk")
@@ -92,7 +96,6 @@ class PreBayesRiskDataset(Dataset):
         tables_to_take = {i: [] for i in range(len(self.tables))}
         original_map = {i: [] for i in range(len(self.tables))}
         for i, (table_i, id) in enumerate(ids):
-
             tables_to_take[table_i].append(id)
             original_map[table_i].append(i)
 
@@ -100,8 +103,6 @@ class PreBayesRiskDataset(Dataset):
         self.resulting_map = []
         for ids in original_map.values():
             self.resulting_map += ids
-
-
 
         preloaded_data = {**{feature_name: [] for feature_name in self.features}, "source": [], "hypothesis": [],
                           "utilities": [], "utilities_count": []}
@@ -146,11 +147,8 @@ class PreBayesRiskDataset(Dataset):
         # Get the relative id
         relative_id = idx - self.current_start_id
 
-
         # We also need to map it to the right id
         relative_id = self.resulting_map[relative_id]
-
-
 
         source = self.preloaded_data["source"][relative_id]
         hypothesis = self.preloaded_data["hypothesis"][relative_id]
@@ -160,7 +158,7 @@ class PreBayesRiskDataset(Dataset):
         # utilities_count = self.preloaded_data["utilities_count"][relative_id]
 
         item = {**features, "source": source, "hypothesis": hypothesis, 'utilities': utilities,
-                } #'utilities_count': utilities_count
+                }  # 'utilities_count': utilities_count
 
         return item
 
@@ -168,11 +166,10 @@ class PreBayesRiskDataset(Dataset):
         self.tables = self.get_tables()
 
     def get_main_dir(self):
+
         ref = self.dataset_location + self.split + '/'
         if self.develop:
             ref += 'develop/'
-
-
 
         return self.path_manager.get_abs_path(ref)
 
@@ -199,7 +196,8 @@ class PreBayesRiskDataset(Dataset):
 
 
 class PreBayesRiskDatasetLoader:
-    def __init__(self, dataset_location, split, features, max_chunk_size=4096 * 8, develop=False, repeated_indices=True):
+    def __init__(self, dataset_location, split, features, max_chunk_size=4096 * 8, develop=False, repeated_indices=True,
+                 on_hpc=False):
         self.dataset_location = dataset_location
         self.split = split  # Amount of rows
         self.features = features
@@ -208,6 +206,8 @@ class PreBayesRiskDatasetLoader:
         self.repeated_indices = repeated_indices
 
         self.dataset = None
+
+        self.on_hpc = on_hpc
 
 
 
@@ -241,13 +241,12 @@ class PreBayesRiskDatasetLoader:
                 df = df.reindex(df.index.repeat(df["count"]))
                 df = df.reset_index(level=0, inplace=False, drop=True)
 
-
             indices_expanded.append(df['ids'].to_list())
 
         # Create the dataset
         return PreBayesRiskDataset(indices_expanded, start_end_indices, self.features,
                                    dataset_location=self.dataset_location,
-                                   max_chunk_size=self.max_chunk_size, split=self.split, develop=self.develop)
+                                   max_chunk_size=self.max_chunk_size, split=self.split, develop=self.develop, on_hpc=self.on_hpc)
 
     def get_main_dir(self):
         ref = self.dataset_location + self.split + '/'

@@ -12,7 +12,10 @@ from custom_datasets.SampleDatasetLoader import SampleDatasetLoader
 from models.wrappers.CometWrapper import CometWrapper
 
 
+
 def main():
+
+
     # Training settings
     parser = argparse.ArgumentParser(description='Give the COMET scores for hypothesis given a reference set')
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -49,7 +52,7 @@ def main():
     resulting_dataset = resulting_dataset_loader.load_empty()
 
     # Load the model
-    model_path = download_model("wmt21-cometinho-da")
+    model_path = download_model("wmt20-comet-da")
     model = load_from_checkpoint(model_path)
 
     model.to("cuda")
@@ -65,16 +68,15 @@ def main():
             i += 1
             source = hyp_data["source"]
 
-
             references = ref_data["samples"]
 
             hyp_list = hyp_data["samples"]
 
-            scores = wrapped_model.fast_predict(source, hyp_list, references)
+            scores = wrapped_model.fast_predict_batched(source, hyp_list, references)
 
-            resulting_dataset.add_row(source, hyp_data["target"], hyp_data["samples"], scores, ref_data["count"], hyp_data["count"],
+            resulting_dataset.add_row(source, hyp_data["target"], hyp_data["samples"], scores, ref_data["count"],
+                                      hyp_data["count"],
                                       )
-
 
             pbar.update(1)
 

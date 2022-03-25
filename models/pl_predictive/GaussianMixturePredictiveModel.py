@@ -15,7 +15,7 @@ class GaussianMixturePredictiveModel(PLBasePredictiveModel):
                          device=device, )
 
         self.n_mixtures = n_mixtures
-        self.criterion = GaussianMixtureLoss(n_mixtures)
+        self.criterion = GaussianMixtureLoss()
 
         self.mode = "text"
 
@@ -40,29 +40,16 @@ class GaussianMixturePredictiveModel(PLBasePredictiveModel):
     def forward_features(self, features):
 
         out = self.head.forward(features)
-        averages = []
-        vars = []
 
-        for i in range(self.n_mixtures):
-        # get the averages.
-            average = out[:, i]
-            averages.append(average)
-        for i in range(self.n_mixtures, 2 * self.n_mixtures):
-            var = self.softplus(out[:, i])
-            vars.append(var)
+        locs = out[:, :self.n_mixtures]
+        scales = self.softplus(out[:, self.n_mixtures:self.n_mixtures * 2])
 
-        x = out[:, 2*self.n_mixtures: 3*self.n_mixtures]
+        logits = out[:, 2 * self.n_mixtures: 3 * self.n_mixtures]
 
-        weights = self.softmax(x)
-        return averages, vars, weights
+        return locs, scales, logits
 
     def get_predicted_risk(self, input_ids, attention_mask, labels, decoder_input_ids):
-
-        (average, vars, weights) = self.forward(input_ids, attention_mask, labels, decoder_input_ids)
-        risk = 0
-        for avg, w in zip(average, weights):
-            risk += avg * w
-        return risk
+        raise NotImplementedError()
 
     def batch_to_out(self, batch):
 
@@ -71,18 +58,18 @@ class GaussianMixturePredictiveModel(PLBasePredictiveModel):
 
             x = {k: v.to("cuda") for k, v in x.items()}
 
-            averages, vars, weights = self.forward(**x)
+            locs, scales, logits = self.forward(**x)
 
 
         else:
             features, (sources, hypothesis), utilities = batch
 
             features = {k: v.to("cuda") for k, v in features.items()}
-            averages, vars, weights = self.forward_features(features)
+            locs, scales, logits = self.forward_features(features)
 
         utilities = utilities.to("cuda")
 
-        loss = self.criterion(averages, utilities, vars, weights)
+        loss = self.criterion(locs, utilities, scales, logits)
 
         return {"loss": loss}
 

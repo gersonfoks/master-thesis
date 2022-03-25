@@ -4,7 +4,7 @@ import argparse
 from datasets import tqdm, load_metric, Dataset
 import torch
 
-from models.MBR_model.MBRModel import MBRModel
+from models.MBR_model.GaussianMBRModel import GaussianMBRModel
 
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 
@@ -25,7 +25,7 @@ def main():
     pl_model, factory = PLPredictiveModelFactory.load(args.path)
     pl_model.set_mode("text")
     pl_model.eval()
-    model = MBRModel(pl_model)
+    model = GaussianMBRModel(pl_model)
 
     sacreblue_metric = load_metric('sacrebleu')
     with torch.no_grad():

@@ -28,7 +28,7 @@ def collate_fn(batch):
 def main():
     parser = argparse.ArgumentParser(description='Preprocesses a dataset')
 
-    parser.add_argument('--config', type=str, default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian.yml',
+    parser.add_argument('--config', type=str, default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-best.yml',
                         help='config to load model from')
     parser.add_argument('--develop', dest='develop', action="store_true",
                         help='If true uses the develop set (with 100 sources) for fast development')
@@ -39,10 +39,10 @@ def main():
 
     parser.add_argument('--save-dir', type=str, default='predictive/tatoeba-de-en/data/preprocessed/')
 
-    parser.add_argument('--n-hypotheses', type=int, default=10, help='Number of hypothesis to use')
+    parser.add_argument('--n-hypotheses', type=int, default=100, help='Number of hypothesis to use')
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
 
-    parser.add_argument('--n-references', type=int, default=100, help='Number of references for each hypothesis')
+    parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
     parser.add_argument('--max-dataset-size', type=int, default=4096 * 8, help='Max number of dataset entries ')
 
     parser.add_argument('--split', type=str, default="train_predictive",
@@ -53,11 +53,11 @@ def main():
     bayes_risk_dataset_loader = BayesRiskDatasetLoader(args.split, args.n_hypotheses, args.n_references,
                                                        args.sampling_method, args.develop, base=args.dataset_dir)
 
-    bayes_risk_dataset = bayes_risk_dataset_loader.load()
+    bayes_risk_dataset = bayes_risk_dataset_loader.load(type="pandas")
 
     # We want to transform this thing to a extended dataset. We use pandas for this
 
-    df = pd.DataFrame.from_dict(bayes_risk_dataset.data)
+    df = bayes_risk_dataset.data
 
     with open(args.config, "r") as file:
         config = yaml.load(file, Loader=yaml.FullLoader)

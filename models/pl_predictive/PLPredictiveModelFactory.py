@@ -5,7 +5,7 @@ import os
 
 import transformers
 
-from models.pl_predictive.GaussianFullPredictiveModel import GaussianFullPredictiveModel
+from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
 from models.pl_predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
 from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
 from models.pl_predictive.MSEPredictiveModel import MSEPredictiveModel
@@ -79,8 +79,8 @@ class PLPredictiveModelFactory:
                                                       feature_map, n_mixtures=self.config["n_mixtures"])
         elif self.config["loss_function"] == "gaussian-full":
             print("using a full model")
-            pl_model = GaussianFullPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
-                                                      feature_map, )
+            pl_model = GaussianPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
+                                               feature_map, )
         else:
             raise ValueError("Not a known type: {}".format(self.config["type"]))
 

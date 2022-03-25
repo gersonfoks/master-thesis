@@ -17,7 +17,7 @@ class CachedTable:
         return self.end_id - self.start_id
 
     def load(self):
-        print("load cached table")
+        print("load cached table from:", self.ref)
         data = load_arrow_file_in_memory(self.ref)
         #data = data_temp.take(list(range(len(data_temp))))
         self.preloaded_data["source"] += list(data["source"].to_pylist())

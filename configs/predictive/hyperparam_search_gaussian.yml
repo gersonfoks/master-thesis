@@ -5,7 +5,7 @@ dataset:
   sampling_method: 'ancestral'
   n_hypotheses: 100
   n_references: 1000
-  repeated_indices: False
+  repeated_indices: True # True if we allow that hypotheses to be repeated multiple times else False
 
 hyperparams:
   predictive_layers:
@@ -33,7 +33,7 @@ hyperparams:
     type: loguniform
     values:
       - 0.00001
-      - 0.1
+      - 0.001
   batch_size:
     - 64
     - 128
@@ -84,6 +84,7 @@ model_config:
 
 max_epochs: 25
 n_trials: 50
+grace_period: 5
 
 
 

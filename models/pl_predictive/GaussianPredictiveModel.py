@@ -1,5 +1,8 @@
+
 from torch import nn
 
+
+from custom_loss.CustomGaussianNLLLoss import CustomGaussianNLLLoss
 from models.pl_predictive.PLBasePredictiveModel import PLBasePredictiveModel
 
 from transformers import DataCollatorForSeq2Seq
@@ -13,7 +16,7 @@ class GaussianPredictiveModel(PLBasePredictiveModel):
         super().__init__(nmt_model, tokenizer, head, initialize_optimizer, padding_id=padding_id,
                          device=device, )
 
-        self.criterion = nn.GaussianNLLLoss(full=True)
+        self.criterion = CustomGaussianNLLLoss()
 
         self.mode = "text"
 

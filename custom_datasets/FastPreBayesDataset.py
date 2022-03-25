@@ -1,10 +1,8 @@
 import os
 
-
 from torch.utils.data import Dataset
 
 import numpy as np
-
 
 from custom_datasets.CachedTable import CachedTable
 from custom_datasets.utils import load_json_as_dict, load_csv_as_df
@@ -48,14 +46,12 @@ class FastPreBayesDataset(Dataset):
             self.mapping += [(t, idx) for idx in indices]
 
     def shuffle(self):
-        print("shuffle")
         np.random.shuffle(self.tables)
         # Shuffle the indices
         for indices in self.table_indices:
             np.random.shuffle(indices)
         # Next we create a mapping
         self.create_mapping()
-
 
     def load_next_datasets(self):
 
@@ -75,7 +71,6 @@ class FastPreBayesDataset(Dataset):
 
         self.current_datasets = []
 
-
         # Check if we need to start over
         if self.current_dataset_start_id == len(self.tables):
             self.current_dataset_start_id = 0
@@ -89,7 +84,6 @@ class FastPreBayesDataset(Dataset):
         self.current_tables = []
         for i in range(start_id, end_id):
             t = self.tables[i]
-            print("loading:", t)
             self.load_dataset(t)
             self.current_datasets.append(self.cached_datasets[t])
 
@@ -120,7 +114,7 @@ class FastPreBayesDataset(Dataset):
 class FastPreBayesDatasetLoader:
 
     def __init__(self, dataset_location, split, features, max_tables=50, develop=False,
-                 repeated_indices=True):
+                 repeated_indices=True, on_hpc=False):
         self.dataset_location = dataset_location
         self.split = split  # Amount of rows
         self.features = features
@@ -131,6 +125,9 @@ class FastPreBayesDatasetLoader:
         self.dataset = None
 
         self.path_manager = get_path_manager()
+
+        self.on_hpc = on_hpc
+        self.hpc_path_manager = get_path_manager('scratch')
 
     def load(self):
 
@@ -150,6 +147,13 @@ class FastPreBayesDatasetLoader:
             ref += 'develop/'
 
         return self.path_manager.get_abs_path(ref)
+
+    def get_table_dir(self):
+        if not self.on_hpc:
+            return self.get_main_dir()
+        else:
+            ref = self.dataset_location + self.split + '/'
+            return self.hpc_path_manager.get_abs_path(ref)
 
     def get_metadata(self):
         path = self.get_main_dir()
@@ -175,7 +179,7 @@ class FastPreBayesDatasetLoader:
         return batched_indices
 
     def get_cached_dataset(self):
-        path = self.get_main_dir() + '/data/'
+        path = self.get_table_dir() + 'data/'
         files = os.listdir(path)
         files = sorted(files, key=lambda x: int(x[:-6]))
         cached_tables = []
