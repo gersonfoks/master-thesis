@@ -7,7 +7,7 @@ from models.MBR_model.BaseMBRModel import BaseMBRModel
 from utils.translation_model_utils import batch_sample, batch
 
 
-class GaussianMixtureMBRModel(BaseMBRModel):
+class StudentTMixtureMBRModel(BaseMBRModel):
     '''
     Model wraps the NMT model
     '''
@@ -62,7 +62,7 @@ class GaussianMixtureMBRModel(BaseMBRModel):
         return mean
 
     def model_out_to_mean(self, model_out, n_samples=1000):
-        mixture = self.get_mixture(model_out["loc"], model_out["scale"], model_out["logits"])
+        mixture = self.get_mixture(model_out["df"], model_out["loc"], model_out["scale"], model_out["logits"])
 
         sample_scores = mixture.sample((n_samples,))
 
@@ -72,36 +72,34 @@ class GaussianMixtureMBRModel(BaseMBRModel):
 
     def add_model_out_to_result(self, result, model_out):
         if result == {}:
+            result["df"] = []
             result["loc"] = []
             result["scale"] = []
             result["logits"] = []
-        result['loc'] += list(model_out[0].cpu().numpy())
-        result['scale'] += list(model_out[1].cpu().numpy())
-        result['logits'] += list(model_out[2].cpu().numpy())
+        result["df"] += list(model_out[0].cpu().numpy())
+        result['loc'] += list(model_out[1].cpu().numpy())
+        result['scale'] += list(model_out[2].cpu().numpy())
+        result['logits'] += list(model_out[3].cpu().numpy())
 
         return result
 
-    def get_mixture(self, loc, scale, logits):
-        components = self.make_components(loc, scale,)
+    def get_mixture(self, df, loc, scale, logits):
+        components = self.make_components(df, loc, scale,)
         mixture = td.MixtureSameFamily(td.Categorical(logits=logits), components)
 
         return mixture
 
-    def make_components(self, loc, scale):
+    def make_components(self, df, loc, scale):
+        df = df.unsqueeze(-1)
         loc = loc.unsqueeze(-1)
         scale = scale.unsqueeze(-1)
-        return td.Independent(td.Normal(loc=loc, scale=scale), 1)
+        return td.Independent(td.StudentT(df, loc=loc, scale=scale), 1)
 
     def get_samples(self, sources, hypotheses, n_samples=1000):
         model_out = self.get_model_out(sources, hypotheses)
-        mixture = self.get_mixture(model_out["loc"], model_out["scale"], model_out["logits"])
+        mixture = self.get_mixture(model_out["df"],model_out["loc"], model_out["scale"], model_out["logits"])
 
         return mixture.sample((n_samples,))
 
 
 
-    # def make_components(self, loc, scale, sample_size):
-    #     shape = loc.shape
-    #     loc = loc.unsqueeze(-1).repeat((1,) * len(shape) + (sample_size,))
-    #     scale = scale.unsqueeze(-1).repeat((1,) * len(shape) + (sample_size,))
-    #     return td.Independent(td.Normal(loc=loc, scale=scale), 1)
