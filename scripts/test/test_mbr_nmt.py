@@ -9,6 +9,8 @@ from tqdm import tqdm
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
 import numpy as np
 
+from metrics.CometMetric import CometMetric
+
 
 def main():
     # Training settings
@@ -18,7 +20,7 @@ def main():
 
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
 
-    split = 'test'
+    split = 'validation_predictive'
 
     args = parser.parse_args()
 
@@ -29,12 +31,15 @@ def main():
 
     sacreblue_metric = load_metric('sacrebleu')
 
+    comet_metric = CometMetric(model_name="wmt20-comet-da")
+
     c = 0
-    for row in tqdm(dataset.data.iterrows(), total=5000):
+    for row in tqdm(dataset.data.iterrows(), total=2500):
         c += 1
         row = row[1]  # Zeroth contains
 
         target = row["target"]
+        source = row["source"]
 
         utilities = row["utilities"]
 
@@ -52,10 +57,17 @@ def main():
 
         sacreblue_metric.add_batch(predictions=[best_h], references=[[target]])
 
+        comet_metric.add(source, best_h, target)
+
     bleu = sacreblue_metric.compute()
 
+
+    scores = comet_metric.compute()
+
+
     test_results = {
-        "sacrebleu": bleu
+        "sacrebleu": bleu,
+        "comet": scores
     }
 
     print(test_results)

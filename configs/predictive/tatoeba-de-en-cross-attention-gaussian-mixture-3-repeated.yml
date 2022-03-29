@@ -5,9 +5,10 @@ dataset:
   sampling_method: 'ancestral'
   n_hypotheses: 100
   n_references: 1000
-  repeated_indices: False
+  repeated_indices: True
 batch_size: 128
-save_loc: 'predictive/tatoeba-de-en/models/gaussian-3/'
+
+save_loc: 'predictive/tatoeba-de-en/models/gaussian-3-repeated/'
 
 model_config:
   lr: 1.4815897489348615e-05
