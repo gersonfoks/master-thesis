@@ -18,7 +18,7 @@ def main():
 
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
 
-    split = 'test'
+    split = 'validation_predictive'
 
     args = parser.parse_args()
 
@@ -30,7 +30,7 @@ def main():
     sacreblue_metric = load_metric('sacrebleu')
 
     c = 0
-    for row in tqdm(dataset.data.iterrows(), total=5000):
+    for row in tqdm(dataset.data.iterrows(), total=2500):
         c += 1
         row = row[1]  # Zeroth contains
 

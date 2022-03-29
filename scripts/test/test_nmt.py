@@ -19,7 +19,7 @@ def main():
 
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
 
-    split = 'test'
+    split = 'validation_predictive'
     args = parser.parse_args()
 
     dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=100, n_references=1000,
@@ -41,7 +41,7 @@ def main():
     nmt_model = nmt_model.eval().to("cuda")
 
     c = 0
-    for row in tqdm(dataset.data.iterrows(), total=5000):
+    for row in tqdm(dataset.data.iterrows(), total=2500):
         c += 1
         row = row[1]  # Zeroth contains
 

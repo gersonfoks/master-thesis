@@ -7,9 +7,8 @@ from datasets import load_metric
 from tqdm import tqdm
 
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
-
-
 from models.MBR_model.GaussianMixtureMBRModel import GaussianMixtureMBRModel
+
 from models.MBR_model.StudentTMixtureMBRModel import StudentTMixtureMBRModel
 from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 
@@ -23,7 +22,7 @@ def main():
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
 
     split = 'validation_predictive'
-    path = "C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/student-t-3/20/"
+    path = "C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/mixture_model_2/"
     args = parser.parse_args()
 
     dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references,
@@ -36,7 +35,7 @@ def main():
     pl_model, factory = PLPredictiveModelFactory.load(path)
 
     pl_model.eval()
-    model = StudentTMixtureMBRModel(pl_model)
+    model = GaussianMixtureMBRModel(pl_model)
 
     c = 0
     for row in tqdm(dataset.data.iterrows(), total=2500):
