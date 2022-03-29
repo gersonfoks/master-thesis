@@ -66,11 +66,11 @@ class PLPredictiveModelFactory:
 
         optimizer_function = get_optimizer_function(self.config)
         # Construct model
-
+        print(self.config["loss_function"])
         if self.config["loss_function"] == "MSE":
             pl_model = MSEPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
                                           feature_map)
-        elif self.config["loss_function"] == "gaussian":
+        elif self.config["loss_function"] == "gaussian" or self.config["loss_function"] == "gaussian-full":# Second one is legacy
             pl_model = GaussianPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
                                                feature_map)
 
