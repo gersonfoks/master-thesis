@@ -8,6 +8,7 @@ from datasets import load_metric
 from tqdm import tqdm
 
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
+from metrics.CometMetric import CometMetric
 
 from utils.parsing.predictive import load_nmt_model
 from utils.translation_model_utils import translate
@@ -28,7 +29,7 @@ def main():
     dataset = dataset_loader.load(type="pandas")
 
     sacreblue_metric = load_metric('sacrebleu')
-
+    comet_metric = CometMetric(model_name="wmt20-comet-da")
     config = {
         "model":
             {"name": 'Helsinki-NLP/opus-mt-de-en',
@@ -51,11 +52,13 @@ def main():
         hypothesis = translate(nmt_model, tokenizer, [source], method=args.sampling_method)[0]
 
         sacreblue_metric.add_batch(predictions=[hypothesis], references=[[target]])
+        comet_metric.add(source, hypothesis, target)
 
     bleu = sacreblue_metric.compute()
-
+    comet = comet_metric.compute()
     test_results = {
-        "sacrebleu": bleu
+        "sacrebleu": bleu,
+        "comet": comet
     }
 
     print(test_results)
