@@ -2,17 +2,12 @@ import torch
 
 from torch import nn
 
+from models.misc import activation_functions
 from models.predictive_head.AttentionHead import AttentionHead
 from models.predictive_head.CrossAttentionHead import CrossAttentionHead
 from models.predictive_head.QueryHead import QueryHead
-from models.predictive_head.PooledHead import PooledHead
-from models.predictive_head.PooledHead import PooledHead
 
-activation_functions = {
-    'silu': torch.nn.SiLU,
-    'relu': torch.nn.ReLU,
-    'tanh': torch.nn.Tanh
-}
+from models.predictive_head.PooledHead import PooledHead
 
 
 class HeadFactory:

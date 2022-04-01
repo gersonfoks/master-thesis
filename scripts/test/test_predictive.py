@@ -79,8 +79,8 @@ def main():
         comet_metric.add(source, best_h, target)
 
     bleu = sacreblue_metric.compute()
-    comet_score = comet_metric.compute()
-
+    #comet_score = comet_metric.compute()
+    comet_score = 0
     test_results = {
         "sacrebleu": bleu,
         "comet": comet_score

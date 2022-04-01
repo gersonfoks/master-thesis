@@ -18,6 +18,7 @@ class PLBasePredictiveModel(pl.LightningModule):
         self.head = head
         self.head.to(self.device_name)
 
+
         self.padding_id = padding_id
 
         # Need to specify in settings below

@@ -1,4 +1,5 @@
 import pandas as pd
+from datasets import Dataset
 
 from custom_datasets.BayesRiskDataset import BayesRiskDataset
 
@@ -35,12 +36,20 @@ class BayesRiskDatasetLoader:
 
     def load(self, type="pydict"):
         path = self.get_dataset_path()
-        table = pq.read_table(path)
+
         if type == "pydict":
+            table = pq.read_table(path)
             self.dataset = BayesRiskDataset(table.to_pydict(), self.split, self.n_hypotheses)
-        else:
+        elif type == "pandas":
+            table = pq.read_table(path)
             self.dataset = BayesRiskDataset(table.to_pandas(), self.split, self.n_hypotheses)
+        else:
+            raise ValueError("no a valid type: {}, choose from pydict, pandas".format(type))
         return self.dataset
+
+    def load_as_huggingface_dataset(self):
+        path = self.get_dataset_path()
+        return Dataset.from_parquet(path)
 
     def load_empty(self):
         '''

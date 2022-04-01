@@ -68,7 +68,7 @@ def main():
                 return (current_step - start_step_decay) ** (-0.5)
 
         optimizers = (optimizer, LambdaLR(optimizer, lr_lambda))
-        # Still need to set it
+
         lr_scheduler_type = "constant"
     else:
 

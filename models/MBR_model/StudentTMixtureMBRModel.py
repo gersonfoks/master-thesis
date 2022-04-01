@@ -38,7 +38,7 @@ class StudentTMixtureMBRModel(BaseMBRModel):
         for x, y in zip(batch(sources, n=batch_size), batch(samples, n=batch_size)):
             model_out = self.predictive_model.predict(x, y)
             result = self.add_model_out_to_result(result, model_out)
-        result = {k: torch.tensor(v) for k, v in result.items()}
+        result = {k: torch.tensor(np.array(v)) for k, v in result.items()}
 
         return result
 

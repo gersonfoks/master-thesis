@@ -12,7 +12,7 @@ class BayesRiskDataset(Dataset):
 
         ]
 
-        self.n_hypotheses = 10
+        self.n_hypotheses = n_hypotheses
 
         if type(data) != None:
             self.data = data

@@ -1,0 +1,42 @@
+# Copies the structure of the NTM config, is used for loading the NMT model
+
+dataset:
+  dir: 'predictive/tatoeba-de-en/data/raw/'
+  sampling_method: 'ancestral'
+  n_hypotheses: 100
+  n_references: 1000
+  repeated_indices: False
+batch_size: 8
+
+
+save_loc: 'predictive/tatoeba-de-en/models/prompt-tuning/'
+
+model_config:
+  lr: 0.001
+  weight_decay: 0.0
+  n_prompts: 4
+  loss_function: 'MSE'
+  preprocess_type: 'full'
+  model_type: 'prompt-tuning'
+  dropout: 0.1
+  nmt_model:
+    model:
+      name: 'Helsinki-NLP/opus-mt-de-en'
+      checkpoint: 'NMT/tatoeba-de-en/model'
+      type: 'MarianMT'
+  activation_function: 'silu'
+  predictive_layers:
+    - 512
+    - 512
+    - 256
+    - 128
+    - 64
+    - 32
+    - 1
+  optimizer: "adam_with_schedule"
+  warmup_steps: 50000
+  start_decay: 70000
+
+
+
+

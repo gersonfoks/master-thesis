@@ -11,11 +11,11 @@ class MSEPredictiveModel(PLBasePredictiveModel):
 
     def __init__(self, nmt_model, tokenizer, head, feature_names, initialize_optimizer, feature_map, padding_id=-100,
 
-                 device="cuda", n_mixtures=2):
+                 device="cuda",):
         super().__init__(nmt_model, tokenizer, head, initialize_optimizer, padding_id=padding_id,
                          device=device, )
 
-        self.n_mixtures = n_mixtures
+
         self.criterion = MSELoss()
 
         self.mode = "text"
@@ -27,6 +27,8 @@ class MSEPredictiveModel(PLBasePredictiveModel):
         self.head = self.head.to(device)
 
         self.feature_map = feature_map
+
+        self.padding_id = self.padding_id
 
     def forward(self, input_ids, attention_mask, labels, decoder_input_ids):
         features = self.get_features(input_ids, attention_mask, labels, decoder_input_ids)
@@ -43,7 +45,7 @@ class MSEPredictiveModel(PLBasePredictiveModel):
 
     def batch_to_out(self, batch):
         if self.mode == "text":
-            x, (sources, targets), utilities = batch
+            x, (sources, hypothesis), utilities = batch
 
             x = {k: v.to("cuda") for k, v in x.items()}
 
@@ -101,6 +103,9 @@ class MSEPredictiveModel(PLBasePredictiveModel):
 
 
     def get_features(self, input_ids, attention_mask, labels, decoder_input_ids):
+
+
+
         nmt_out = self.nmt_model.forward(input_ids=input_ids, attention_mask=attention_mask, labels=labels,
                                          decoder_input_ids=decoder_input_ids, output_hidden_states=True,
                                          output_attentions=True)

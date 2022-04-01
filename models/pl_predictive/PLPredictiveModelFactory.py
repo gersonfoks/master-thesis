@@ -1,10 +1,11 @@
 '''
 THis file contains a class that is a factory that construct models based on some specification
 '''
+import math
 import os
 
 import transformers
-
+from torch.optim.lr_scheduler import LambdaLR
 
 from models.pl_predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
 from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
@@ -32,14 +33,41 @@ def get_optimizer_function(config):
     if config["optimizer"] == "adam":
         return lambda x: torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"])
     if config["optimizer"] == "adam_with_schedule":
-        def f(x):
+
+        def initializer(x):
+
+            num_warmup_steps = config["warmup_steps"]
+
             optimizer = torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"])
-            schedular = transformers.get_cosine_with_hard_restarts_schedule_with_warmup(optimizer,
-                                                                                        num_warmup_steps=7200)
 
-            return [optimizer], [schedular]
 
-        return f
+
+            # When to start the decay
+            start_step_decay = config["start_decay"]
+
+            def lr_lambda(current_step: int):
+
+                if current_step <= num_warmup_steps:
+                    return current_step / num_warmup_steps
+                # Waiting a number of steps before decaying
+                elif current_step <= start_step_decay:
+                    return 1.0
+                else:
+                    return (current_step - start_step_decay) ** (-0.5)
+
+
+            lr_config = {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+
+                    "scheduler": LambdaLR(optimizer, lr_lambda),
+                    "interval": "step",
+                }
+
+            }
+
+            return lr_config
+        return initializer
 
 
 class PLPredictiveModelFactory:
