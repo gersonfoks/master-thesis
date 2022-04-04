@@ -104,8 +104,6 @@ class MSEPredictiveModel(PLBasePredictiveModel):
 
     def get_features(self, input_ids, attention_mask, labels, decoder_input_ids):
 
-
-
         nmt_out = self.nmt_model.forward(input_ids=input_ids, attention_mask=attention_mask, labels=labels,
                                          decoder_input_ids=decoder_input_ids, output_hidden_states=True,
                                          output_attentions=True)

@@ -4,7 +4,7 @@ import argparse
 import pytorch_lightning as pl
 import yaml
 import numpy as np
-from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from torch.utils.data import DataLoader
 
 from callbacks.CustomCheckpointCallback import CheckpointCallback
@@ -84,17 +84,17 @@ def main():
     path = path_manager.get_abs_path(config["save_loc"])
 
     checkpoint_callback = CheckpointCallback(pl_factory, path)
-    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=5, verbose=False, mode="min",
+    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=10, verbose=False, mode="min",
                                         check_finite=True,
                                         divergence_threshold=3)
 
 
     trainer = pl.Trainer(
-        max_epochs=25,
+        max_epochs=50,
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,
-        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, early_stop_callback]
+        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, early_stop_callback, LearningRateMonitor(logging_interval="epoch")]
     )
 
     # create the dataloaders

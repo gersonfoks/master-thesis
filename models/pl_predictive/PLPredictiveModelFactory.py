@@ -1,11 +1,8 @@
 '''
 THis file contains a class that is a factory that construct models based on some specification
 '''
-import math
-import os
 
-import transformers
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim.lr_scheduler import LambdaLR, ReduceLROnPlateau
 
 from models.pl_predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
 from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
@@ -67,6 +64,31 @@ def get_optimizer_function(config):
 
                     "scheduler": LambdaLR(optimizer, lr_lambda),
                     "interval": "step",
+                }
+
+            }
+
+            return lr_config
+
+        return initializer
+
+    if config["optimizer"] == "adam_with_plateau":
+
+        def initializer(x):
+
+
+
+            optimizer = torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"])
+
+
+
+            lr_config = {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+
+                    "scheduler": ReduceLROnPlateau(optimizer, "min", patience=config["patience"]),
+
+                    "monitor": 'val_loss'
                 }
 
             }
