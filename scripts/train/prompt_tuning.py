@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 import yaml
 import numpy as np
 from datasets import Dataset
-from pytorch_lightning import Callback
+
 from pytorch_lightning.callbacks import LearningRateMonitor
 
 from torch.utils.data import DataLoader
@@ -48,11 +48,6 @@ class DataCollator:
 
         return x, (sources, hypotheses), utilities
 
-# class LearningRateMonitor(Callback):
-#
-#     def on_batch_end(self, trainer: 'pl.Trainer', pl_module: 'pl.LightningModule') -> None:
-#         print(trainer.lr_schedulers)
-#         print(trainer.optimizers)
 
 
 def main():
@@ -124,7 +119,8 @@ def main():
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,
-        callbacks=[LearningRateMonitor(logging_interval="step")]
+        callbacks=[LearningRateMonitor(logging_interval="step")],
+        accumulate_grad_batches=config["accumulate_grad_batches"],
 
     )
     trainer.fit(prompt_model, train_dataloader=train_dataloader, val_dataloaders=validation_dataloader, )

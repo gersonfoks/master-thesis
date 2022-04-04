@@ -10,7 +10,7 @@ import torch
 
 class PLPromptModel(pl.LightningModule):
 
-    def __init__(self, nmt_model, tokenizer, head, prompt_embedding, initialize_optimizer, padding_id=-100,
+    def __init__(self, nmt_model, tokenizer, head, encoder_prompt_embedding, decoder_prompt_embedding, initialize_optimizer, padding_id=-100,
 
                  device="cuda", n_mixtures=2):
         super().__init__()
@@ -29,16 +29,19 @@ class PLPromptModel(pl.LightningModule):
         self.nmt_model.requires_grad = False
         self.tokenizer = tokenizer
 
-        self.prompt_embedding = prompt_embedding
+        self.encoder_prompt_embedding = encoder_prompt_embedding
+        self.decoder_prompt_embedding = decoder_prompt_embedding
 
         self.data_collator = DataCollatorForSeq2Seq(model=self.nmt_model, tokenizer=self.tokenizer,
                                                     padding=True, return_tensors="pt")
 
-        self.n_prompts = prompt_embedding.shape[0]
+        self.n_prompts = encoder_prompt_embedding.shape[0]
 
         self.log_vars = ["loss"]
 
-        self.x = torch.nn.Linear(2,512)
+
+
+        self.nmt_model.train()
 
 
 
@@ -49,11 +52,12 @@ class PLPromptModel(pl.LightningModule):
         # First we forward the input ids to the embedding and prepend the learned prompt_embedding. Also we update the attention_mask
         input_embedding, attention_mask = self.get_input_embeddings(input_ids, attention_mask)
 
+        decoder_inputs_embeds , decoder_attention_mask = self.get_decoder_inputs_embeds(decoder_input_ids)
 
-        nmt_out = self.nmt_model.forward(inputs_embeds=input_embedding, attention_mask=attention_mask, labels=labels,
-                                         decoder_input_ids=decoder_input_ids, output_hidden_states=True)
-        batch_size = input_embedding.shape[0]
-        features = nmt_out["decoder_hidden_states"][-1][:, -1] # Use the first token of the last hidden state
+        nmt_out = self.nmt_model.forward(inputs_embeds=input_embedding, attention_mask=attention_mask, decoder_attention_mask=decoder_attention_mask,
+                                         decoder_inputs_embeds =decoder_inputs_embeds , output_hidden_states=True)
+
+        features = nmt_out["decoder_hidden_states"][-1][:, 0] # Use the first token of the last hidden state
 
         predicted_utilities = self.head.forward(features)
 
@@ -66,7 +70,7 @@ class PLPromptModel(pl.LightningModule):
 
 
         # Append
-        prompt_embedding = self.prompt_embedding.unsqueeze(0).repeat(input_ids.shape[0], 1, 1) # Repeat for the batch
+        prompt_embedding = self.encoder_prompt_embedding.unsqueeze(0).repeat(input_ids.shape[0], 1, 1) # Repeat for the batch
         input_embed = torch.cat([prompt_embedding, input_embed], 1)
 
         shape = attention_mask.shape
@@ -78,6 +82,27 @@ class PLPromptModel(pl.LightningModule):
 
         return input_embed, attention_mask
 
+    def get_decoder_inputs_embeds(self, decoder_input_ids, ):
+
+
+
+        input_embed = self.nmt_model.model.decoder.embed_tokens(decoder_input_ids)
+
+        prompt_embedding = self.decoder_prompt_embedding.unsqueeze(0).repeat(decoder_input_ids.shape[0], 1,
+                                                                             1)  # Repeat for the batch
+
+        embed = torch.cat([prompt_embedding, input_embed], 1)
+
+        shape = decoder_input_ids.shape
+
+        one_vector = torch.ones((shape[0], self.n_prompts)).to(self.device)
+        attention_mask = decoder_input_ids != 58100
+        attention_mask[:, 0] = True # First padding shouldn't be ignored
+
+        attention_mask = torch.cat([one_vector, attention_mask], 1)
+
+        return embed, attention_mask
+
 
 
     def batch_to_out(self, batch):
@@ -85,16 +110,16 @@ class PLPromptModel(pl.LightningModule):
 
         x, (sources, targets), utilities = batch
 
+
         x = {k: v.to("cuda") for k, v in x.items()}
 
-        predicted_utility = self.forward(**x)
+        predicted_utility = self.forward(**x).flatten()
 
 
         utilities = utilities.to("cuda")
 
 
-
-        loss = self.criterion(predicted_utility.flatten(), utilities)
+        loss = self.criterion(predicted_utility, utilities)
 
         return {"loss": loss}
 
@@ -141,5 +166,5 @@ class PLPromptModel(pl.LightningModule):
             self.log("val_{}".format(log_var), batch_out[log_var])
 
     def configure_optimizers(self):
-        return self.initialize_optimizer(list(self.head.parameters()) + [self.prompt_embedding] )
+        return self.initialize_optimizer(list(self.head.parameters()) + [self.encoder_prompt_embedding, self.decoder_prompt_embedding] ) #
 

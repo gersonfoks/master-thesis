@@ -7,18 +7,19 @@ dataset:
   n_references: 1000
   repeated_indices: False
 batch_size: 8
+accumulate_grad_batches: 16 # Effective batch size of 128
 
 
 save_loc: 'predictive/tatoeba-de-en/models/prompt-tuning/'
 
 model_config:
-  lr: 0.001
+  lr: 0.0001
   weight_decay: 0.0
   n_prompts: 4
   loss_function: 'MSE'
   preprocess_type: 'full'
   model_type: 'prompt-tuning'
-  dropout: 0.1
+  dropout: 0.25
   nmt_model:
     model:
       name: 'Helsinki-NLP/opus-mt-de-en'
@@ -27,16 +28,12 @@ model_config:
   activation_function: 'silu'
   predictive_layers:
     - 512
-    - 512
     - 256
     - 128
     - 64
     - 32
     - 1
-  optimizer: "adam_with_schedule"
-  warmup_steps: 50000
-  start_decay: 70000
-
+  optimizer: "adam"
 
 
 

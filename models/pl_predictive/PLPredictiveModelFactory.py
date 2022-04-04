@@ -31,7 +31,15 @@ activation_functions = {
 def get_optimizer_function(config):
     print(config["weight_decay"])
     if config["optimizer"] == "adam":
-        return lambda x: torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"])
+
+        def initializer(x):
+
+            lr_config = {
+                "optimizer":  torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"]),
+
+            }
+            return lr_config
+        return initializer
     if config["optimizer"] == "adam_with_schedule":
 
         def initializer(x):
@@ -39,8 +47,6 @@ def get_optimizer_function(config):
             num_warmup_steps = config["warmup_steps"]
 
             optimizer = torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"])
-
-
 
             # When to start the decay
             start_step_decay = config["start_decay"]
@@ -55,7 +61,6 @@ def get_optimizer_function(config):
                 else:
                     return (current_step - start_step_decay) ** (-0.5)
 
-
             lr_config = {
                 "optimizer": optimizer,
                 "lr_scheduler": {
@@ -67,6 +72,7 @@ def get_optimizer_function(config):
             }
 
             return lr_config
+
         return initializer
 
 
@@ -98,7 +104,8 @@ class PLPredictiveModelFactory:
         if self.config["loss_function"] == "MSE":
             pl_model = MSEPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
                                           feature_map)
-        elif self.config["loss_function"] == "gaussian" or self.config["loss_function"] == "gaussian-full":# Second one is legacy
+        elif self.config["loss_function"] == "gaussian" or self.config[
+            "loss_function"] == "gaussian-full":  # Second one is legacy
             pl_model = GaussianPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
                                                feature_map)
 
@@ -112,7 +119,7 @@ class PLPredictiveModelFactory:
         elif self.config["loss_function"] == "student-t-mixture":
             print("using a student-t mixture model")
             pl_model = StudentTMixturePredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
-                                               feature_map, )
+                                                      feature_map, )
         else:
             raise ValueError("Not a known type: {}".format(self.config["type"]))
 

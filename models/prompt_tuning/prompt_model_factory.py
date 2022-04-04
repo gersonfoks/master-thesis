@@ -31,20 +31,24 @@ class PromptModelFactory:
         optimizer_function = get_optimizer_function(self.config)
 
 
-        prompt_embedding = self.get_prompt_embedding(nmt_model, tokenizer, self.config["n_prompts"])
+        encoder_prompt_embedding, decoder_prompt_embedding = self.get_prompt_embedding(nmt_model, tokenizer, self.config["n_prompts"])
 
-        prompt_model = PLPromptModel(nmt_model, tokenizer, head, prompt_embedding, optimizer_function)
+        prompt_model = PLPromptModel(nmt_model, tokenizer, head, encoder_prompt_embedding, decoder_prompt_embedding, optimizer_function)
 
         return prompt_model
 
     def get_prompt_embedding(self, nmt_model, tokenizer, n_prompts):
-        # TODO use better initialization (random embeddings from the model)
-        ids = torch.tensor(np.random.choice(tokenizer.vocab_size, n_prompts))
 
-        embeddings = nmt_model.model.encoder.embed_tokens(ids)
-        prompt = torch.nn.Parameter(embeddings)
-        prompt.requires_grad = True
-        return prompt
+        encoder_ids = torch.tensor(np.random.choice(tokenizer.vocab_size, n_prompts))
+        decoder_ids = torch.tensor(np.random.choice(tokenizer.vocab_size, n_prompts))
+
+        encoder_embeds = nmt_model.model.encoder.embed_tokens(encoder_ids)
+        decoder_embeds = nmt_model.model.decoder.embed_tokens(decoder_ids)
+        encoder_prompt = torch.nn.Parameter(encoder_embeds)
+        decoder_prompt = torch.nn.Parameter(decoder_embeds)
+        encoder_prompt.requires_grad = True
+        decoder_prompt.requires_grad = True
+        return encoder_prompt, decoder_prompt
 
 
     def create_head(self, pretrained_head_path=None):
