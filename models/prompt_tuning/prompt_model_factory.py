@@ -1,7 +1,7 @@
 
 from models.misc import activation_functions
 from models.pl_predictive.PLPredictiveModelFactory import get_optimizer_function
-from models.prompt_tuning.PlPromptModel import PLPromptModel
+from models.prompt_tuning.PlPromptModel import PLPromptModel, PLFinetuneModel
 
 from utils.parsing.predictive import load_nmt_model
 import torch
@@ -30,12 +30,18 @@ class PromptModelFactory:
 
         optimizer_function = get_optimizer_function(self.config)
 
+        if self.config["model_type"] == "prompt-tuning":
+            encoder_prompt_embedding, decoder_prompt_embedding = self.get_prompt_embedding(nmt_model, tokenizer, self.config["n_prompts"])
 
-        encoder_prompt_embedding, decoder_prompt_embedding = self.get_prompt_embedding(nmt_model, tokenizer, self.config["n_prompts"])
+            model = PLPromptModel(nmt_model, tokenizer, head, encoder_prompt_embedding, decoder_prompt_embedding, optimizer_function)
+        elif self.config["model_type"] == "fine-tuning":
+            print("fine tuning")
+            model = PLFinetuneModel(nmt_model, tokenizer, head,
+                                  optimizer_function)
+        else:
+            raise ValueError("Not a known model type: {}".format(self.config["model_type"]))
 
-        prompt_model = PLPromptModel(nmt_model, tokenizer, head, encoder_prompt_embedding, decoder_prompt_embedding, optimizer_function)
-
-        return prompt_model
+        return model
 
     def get_prompt_embedding(self, nmt_model, tokenizer, n_prompts):
 

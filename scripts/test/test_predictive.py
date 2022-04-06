@@ -29,7 +29,7 @@ def main():
 
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
     parser.add_argument('--split', type=str, default="validation_predictive")
-    parser.add_argument('--model-name', type=str, default='MSE')
+    parser.add_argument('--model-name', type=str, default='gaussian')
     parser.add_argument('--base-dir', type=str, default='C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/')
 
     args = parser.parse_args()
@@ -79,8 +79,8 @@ def main():
         comet_metric.add(source, best_h, target)
 
     bleu = sacreblue_metric.compute()
-    #comet_score = comet_metric.compute()
-    comet_score = 0
+    comet_score = comet_metric.compute()
+    
     test_results = {
         "sacrebleu": bleu,
         "comet": comet_score

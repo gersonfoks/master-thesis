@@ -57,11 +57,10 @@ class GaussianMBRModel(BaseMBRModel):
         return mean
 
     def model_out_to_mean(self, model_out, n_samples=1000):
-        return model_out["scale"].cpu().numpy().flatten()
+        return model_out["loc"].cpu().numpy().flatten()
 
     def model_out_to_risk(self, model_out):
-
-        return model_out["scale"].cpu().numpy().flatten()
+        return model_out["loc"].cpu().numpy().flatten()
 
     def add_model_out_to_result(self, result, model_out):
         if result == {}:

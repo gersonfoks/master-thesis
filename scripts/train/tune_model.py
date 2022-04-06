@@ -57,7 +57,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Perform prompt tuning')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-prompt-tuning.yml',
+                        default='./configs/predictive/tatoeba-de-en-fine-tuning.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -115,7 +115,7 @@ def main():
                                        collate_fn=data_collator)
 
     trainer = pl.Trainer(
-        max_epochs=10,
+        max_epochs=5,
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,
