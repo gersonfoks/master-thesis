@@ -116,7 +116,7 @@ def main():
 
 
     trainer = pl.Trainer(
-        max_epochs=5,
+        max_epochs=10,
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,
