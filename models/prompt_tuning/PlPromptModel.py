@@ -64,6 +64,7 @@ class PLPromptModel(pl.LightningModule):
     def get_input_embeddings(self, input_ids, attention_mask):
         enc = self.nmt_model.model.encoder
         if type(self.encoder_prompt_embedding) == type(None):
+
             return enc.embed_tokens(input_ids) * enc.embed_scale, attention_mask
 
         input_embed = enc.embed_tokens(input_ids) * enc.embed_scale
