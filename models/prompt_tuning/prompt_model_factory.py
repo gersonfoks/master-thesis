@@ -31,9 +31,9 @@ class PromptModelFactory:
         optimizer_function = get_optimizer_function(self.config)
 
         if self.config["model_type"] == "prompt-tuning":
-            encoder_prompt_embedding, decoder_prompt_embedding = self.get_prompt_embedding(nmt_model, tokenizer, self.config["n_prompts"])
+            encoder_prompt, start_decoder_prompt, end_decoder_prompt = self.get_prompt_embedding(nmt_model, tokenizer)
 
-            model = PLPromptModel(nmt_model, tokenizer, head, encoder_prompt_embedding, decoder_prompt_embedding, optimizer_function)
+            model = PLPromptModel(nmt_model, tokenizer, head, encoder_prompt, start_decoder_prompt, end_decoder_prompt, optimizer_function)
         elif self.config["model_type"] == "fine-tuning":
             print("fine tuning")
             model = PLFinetuneModel(nmt_model, tokenizer, head,
@@ -43,18 +43,31 @@ class PromptModelFactory:
 
         return model
 
-    def get_prompt_embedding(self, nmt_model, tokenizer, n_prompts):
+    def get_prompt_embedding(self, nmt_model, tokenizer):
 
-        encoder_ids = torch.tensor(np.random.choice(tokenizer.vocab_size, n_prompts))
-        decoder_ids = torch.tensor(np.random.choice(tokenizer.vocab_size, n_prompts))
+        if self.config["n_encoder_prompts"] > 0:
+            encoder_prompt = self.get_random_embedding(nmt_model, tokenizer, self.config["n_encoder_prompts"], decoder=False)
+        else:
+            encoder_prompt = None
+        if self.config["n_start_decoder_prompts"] > 0:
+            start_decoder_prompt = self.get_random_embedding(nmt_model, tokenizer, self.config["n_start_decoder_prompts"], decoder=True)
+        else:
+            start_decoder_prompt = None
+        end_decoder_prompt = self.get_random_embedding(nmt_model, tokenizer, self.config["n_end_decoder_prompts"], decoder=True)
+        return encoder_prompt, start_decoder_prompt, end_decoder_prompt
 
-        encoder_embeds = nmt_model.model.encoder.embed_tokens(encoder_ids)
-        decoder_embeds = nmt_model.model.decoder.embed_tokens(decoder_ids)
-        encoder_prompt = torch.nn.Parameter(encoder_embeds)
-        decoder_prompt = torch.nn.Parameter(decoder_embeds)
-        encoder_prompt.requires_grad = True
-        decoder_prompt.requires_grad = True
-        return encoder_prompt, decoder_prompt
+    def get_random_embedding(self, nmt_model, tokenizer, n_prompts, decoder=True):
+
+        ids = torch.tensor(np.random.choice(tokenizer.vocab_size, n_prompts))
+        if decoder:
+            embeds = nmt_model.model.decoder.embed_tokens(ids) * nmt_model.model.decoder.embed_scale
+        else:
+            embeds = nmt_model.model.encoder.embed_tokens(ids) * nmt_model.model.encoder.embed_scale
+        embeds = torch.nn.Parameter(embeds)
+        embeds.requires_grad = True
+        return embeds
+
+
 
 
     def create_head(self, pretrained_head_path=None):

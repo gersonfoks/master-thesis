@@ -15,7 +15,6 @@ save_loc: 'predictive/tatoeba-de-en/models/fine-tuning/'
 model_config:
   lr: 0.0001
   weight_decay: 0.0
-  n_prompts: 1
   loss_function: 'MSE'
   preprocess_type: 'full'
   model_type: 'fine-tuning'
