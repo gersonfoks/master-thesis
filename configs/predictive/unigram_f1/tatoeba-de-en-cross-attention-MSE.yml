@@ -45,6 +45,7 @@ model_config:
       checkpoint: 'NMT/tatoeba-de-en/model'
       type: 'MarianMT'
   activation_function: 'silu'
+  activation_function_last_layer: 'sigmoid'
   predictive_layers:
     - 4096 # n_queries * n_features * 512 (hidden size) (Read the n_features from features)
     - 2048

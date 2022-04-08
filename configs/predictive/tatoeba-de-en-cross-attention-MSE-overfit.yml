@@ -9,11 +9,11 @@ dataset:
 batch_size: 128
 
 
-save_loc: 'predictive/tatoeba-de-en/models/MSE/'
+save_loc: 'predictive/tatoeba-de-en/models/MSE-overfit/'
 
 model_config:
-  lr: 1.4815897489348615e-05
-  weight_decay: 1.001726887106992e-06
+  lr: 0.0001
+  weight_decay: 0.0
   loss_function: 'MSE'
   preprocess_type: 'full'
   model_type: 'cross_attention'
@@ -33,7 +33,7 @@ model_config:
     n_queries: 2
     n_heads: 4
     hidden_dim: 512
-  dropout: 0.6712665889822903
+  dropout: 0.0
   features:
     decoder_hidden_state: # Which hidden states to use
       - -1

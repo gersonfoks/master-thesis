@@ -23,8 +23,10 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-cross-attention-student-t-mixture-3-repeated.yml',
+                        default='./configs/predictive/tatoeba-de-en-cross-attention-MSE.yml',
                         help='config to load model from')
+
+    parser.add_argument('--utility', type=str, default="unigram-f1")
 
     parser.add_argument('--develop', dest='develop', action="store_true",
                         help='If true uses the develop set (with 100 sources) for fast development')
@@ -46,7 +48,7 @@ def main():
     pl_model.set_mode('features')
     dataset_config = config["dataset"]
 
-    preprocess_dir = dataset_config["preprocess_dir"] + "{}_{}/".format(dataset_config["n_hypotheses"],
+    preprocess_dir = dataset_config["preprocess_dir"] + "{}/{}_{}/".format(args.utility,dataset_config["n_hypotheses"],
                                                                         dataset_config["n_references"])
 
     if args.on_hpc:
@@ -81,7 +83,8 @@ def main():
 
     path_manager = get_path_manager()
 
-    path = path_manager.get_abs_path(config["save_loc"])
+    save_loc = config["save_loc"] + '/{}/'.format(args.utility)
+    path = path_manager.get_abs_path(save_loc)
 
     checkpoint_callback = CheckpointCallback(pl_factory, path)
     early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=10, verbose=False, mode="min",
@@ -94,7 +97,7 @@ def main():
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,
-        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, early_stop_callback, LearningRateMonitor(logging_interval="epoch")]
+        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, LearningRateMonitor(logging_interval="epoch"), early_stop_callback]
     )
 
     # create the dataloaders

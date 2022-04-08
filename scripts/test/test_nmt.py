@@ -19,11 +19,11 @@ def main():
     parser = argparse.ArgumentParser(description='Test MBR based on pre calculated scores')
 
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
-
+    parser.add_argument('--utility', type=str, default="unigram-f1")
     split = 'validation_predictive'
     args = parser.parse_args()
 
-    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=100, n_references=1000,
+    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=100, n_references=1000, utility=args.utility,
                                             sampling_method='ancestral')
 
     dataset = dataset_loader.load(type="pandas")

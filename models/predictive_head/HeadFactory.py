@@ -49,6 +49,13 @@ class HeadFactory:
 
         # Add the last one
         layers.append(nn.Linear(config['predictive_layers'][-2], config['predictive_layers'][-1]))
+        # Also add the last activation function
+
+
+        if "activation_function_last_layer" in config.keys() and config['activation_function_last_layer'] != "none":
+            print("using new layer")
+            activation_function_last_layer = activation_functions[config['activation_function_last_layer']]
+            layers.append(activation_function_last_layer())
 
         return nn.Sequential(*layers)
 
@@ -152,6 +159,7 @@ class HeadFactory:
         head_path = path + 'head.pt'
         checkpoint = torch.load(head_path)
         factory = HeadFactory(checkpoint["config"])
+        print(factory.config)
         head = factory.get_head()
         head.load_state_dict(checkpoint["state_dict"])
         return head, factory

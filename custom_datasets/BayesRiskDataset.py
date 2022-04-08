@@ -14,9 +14,10 @@ class BayesRiskDataset(Dataset):
 
         self.n_hypotheses = n_hypotheses
 
-        if type(data) != None:
+        if type(data) != type(None):
             self.data = data
         else:
+
             self.data = {col: [] for col in self.columns}
 
         self.split = split

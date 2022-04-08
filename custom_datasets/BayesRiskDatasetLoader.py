@@ -18,7 +18,7 @@ The format of the datasets are:
 
 
 class BayesRiskDatasetLoader:
-    def __init__(self, split, n_hypotheses, n_references, sampling_method, develop=False, base='predictive/tatoeba-de-en/data/raw/', ):
+    def __init__(self, split, n_hypotheses, n_references, sampling_method, utility, develop=False, base='predictive/tatoeba-de-en/data/raw/', ):
         self.split = split
 
         self.n_hypotheses = n_hypotheses
@@ -29,6 +29,8 @@ class BayesRiskDatasetLoader:
         self.develop = develop
 
         self.base = base
+
+        self.utility = utility
 
         self.path_manager = get_path_manager()
 
@@ -60,7 +62,7 @@ class BayesRiskDatasetLoader:
         return self.dataset
 
     def get_dataset_path(self, ):
-        relative_path = "{}{}_{}_scores_{}_{}".format(self.base, self.split, self.sampling_method,
+        relative_path = "{}/{}/{}_{}_scores_{}_{}".format(self.base, self.utility, self.split, self.sampling_method,
                                                       self.n_hypotheses, self.n_references, )
         if self.develop:
             relative_path += '_develop'

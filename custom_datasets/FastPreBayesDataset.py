@@ -40,12 +40,14 @@ class FastPreBayesDataset(Dataset):
         return np.sum([len(i) for i in self.table_indices])
 
     def create_mapping(self):
+        # This mapping keeps track of where we should get the indices from.
         self.mapping = []
         for t in self.tables:
             indices = self.table_indices[t]
             self.mapping += [(t, idx) for idx in indices]
 
     def shuffle(self):
+        # Shuffle the tables around
         np.random.shuffle(self.tables)
         # Shuffle the indices
         for indices in self.table_indices:

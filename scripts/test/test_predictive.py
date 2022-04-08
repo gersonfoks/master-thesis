@@ -29,19 +29,20 @@ def main():
 
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
     parser.add_argument('--split', type=str, default="validation_predictive")
-    parser.add_argument('--model-name', type=str, default='gaussian')
+    parser.add_argument('--model-name', type=str, default='MSE')
+    parser.add_argument('--utility', type=str, default="unigram-f1")
     parser.add_argument('--base-dir', type=str, default='C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/')
 
     args = parser.parse_args()
-    path = args.base_dir + args.model_name + '/'
-    result_save_path = './results/{}/'.format(args.model_name)
+    path = args.base_dir + args.model_name + '/{}/'.format(args.utility)
+    result_save_path = './results/{}/{}'.format(args.model_name, args.utility)
 
     Path(result_save_path).mkdir(parents=True, exist_ok=True)
 
-    result_save_name = '{}results.json'.format(result_save_path)
+    result_save_name = '{}/results.json'.format(result_save_path)
 
     split = args.split
-    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references,
+    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references, utility=args.utility,
                                             sampling_method='ancestral')
 
     dataset = dataset_loader.load(type="pandas")

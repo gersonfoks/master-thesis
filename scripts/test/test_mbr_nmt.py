@@ -17,14 +17,14 @@ def main():
     parser = argparse.ArgumentParser(description='Test MBR based on pre calculated scores')
     parser.add_argument('--n-hypotheses', type=int, default=100, help='Number of hypothesis to use')
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
-
+    parser.add_argument('--utility', type=str, default="unigram-f1")
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
 
     split = 'validation_predictive'
 
     args = parser.parse_args()
 
-    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references,
+    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references, utility=args.utility,
                                             sampling_method='ancestral')
 
     dataset = dataset_loader.load(type="pandas")
@@ -70,7 +70,7 @@ def main():
         "comet": scores
     }
 
-    print(test_results)
+
 
 
 if __name__ == '__main__':
