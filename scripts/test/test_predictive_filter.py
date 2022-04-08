@@ -20,8 +20,9 @@ def main():
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
 
     parser.add_argument('--top-p', type=float, default=0.1, help="What percentage of the best scoring hypotheses we should keep to test mbr score")
+    parser.add_argument('--utility', type=str, default="unigram-f1")
 
-    parser.add_argument('--model-name', type=str, default='gaussian-3-repeated')
+    parser.add_argument('--model-name', type=str, default='MSE')
     parser.add_argument('--base-dir', type=str, default='C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/')
 
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
@@ -31,7 +32,7 @@ def main():
 
     args = parser.parse_args()
 
-    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references,
+    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references, utility=args.utility,
                                             sampling_method='ancestral')
 
     dataset = dataset_loader.load(type="pandas")
@@ -41,24 +42,18 @@ def main():
     comet_metric = CometMetric(model_name="wmt20-comet-da")
 
 
-    samples_path = args.base_dir + args.model_name + "/samples.parquet"
+    samples_path = args.base_dir + args.model_name + '/{}/'.format(args.utility) + "/predicted_scores.parquet"
 
 
     samples = pd.read_parquet(samples_path)
 
-    dataset.data["samples"] = samples["samples"]
+    dataset.data["predicted_scores"] = samples["predicted_scores"]
 
 
     # Calculate the means
 
-    def to_mean(x):
-        samples = x["samples"]
-        result = []
-        for s in samples:
-            result.append(np.mean(s))
-        return result
 
-    dataset.data["predicted_means"] = dataset.data.apply(to_mean, axis=1)
+
 
     c = 0
     for row in tqdm(dataset.data.iterrows(), total=2500):
@@ -72,11 +67,11 @@ def main():
 
         utilities_count = row["utilities_count"]
 
-        means = np.array(row["predicted_means"])
+        scores = np.array(row["predicted_scores"])
 
-        top_p = math.ceil(args.top_p * len(means))
+        top_p = math.ceil(args.top_p * len(scores))
 
-        sorted_indices = np.argsort(-means)[:top_p]
+        sorted_indices = np.argsort(-scores)[:top_p]
 
 
 

@@ -23,15 +23,18 @@ def main():
 
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
 
+    parser.add_argument('--utility', type=str, default="unigram-f1")
 
     split = 'validation_predictive'
 
     args = parser.parse_args()
 
-    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references,
+    dataset_loader = BayesRiskDatasetLoader(split, n_hypotheses=args.n_hypotheses, n_references=args.n_references, utility=args.utility,
                                             sampling_method='ancestral')
 
     dataset = dataset_loader.load(type="pandas")
+
+    print(dataset.data["utilities"].head())
 
     sacreblue_metric = load_metric('sacrebleu')
 
