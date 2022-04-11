@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
 from metrics.CometMetric import CometMetric
+from metrics.NGramF1Metric import NGramF1Metric
 
 from utils.parsing.predictive import load_nmt_model
 from utils.translation_model_utils import translate
@@ -16,7 +17,7 @@ from utils.translation_model_utils import translate
 
 def main():
     # Training settings
-    parser = argparse.ArgumentParser(description='Test MBR based on pre calculated scores')
+    parser = argparse.ArgumentParser(description='Test NMT model')
 
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
     parser.add_argument('--utility', type=str, default="unigram-f1")
@@ -30,6 +31,7 @@ def main():
 
     sacreblue_metric = load_metric('sacrebleu')
     comet_metric = CometMetric(model_name="wmt20-comet-da")
+    unigram_f1_metric = NGramF1Metric(1)
     config = {
         "model":
             {"name": 'Helsinki-NLP/opus-mt-de-en',
@@ -40,6 +42,8 @@ def main():
     nmt_model, tokenizer = load_nmt_model(config, pretrained=True)
 
     nmt_model = nmt_model.eval().to("cuda")
+
+
 
     c = 0
     for row in tqdm(dataset.data.iterrows(), total=2500):
@@ -53,12 +57,17 @@ def main():
 
         sacreblue_metric.add_batch(predictions=[hypothesis], references=[[target]])
         comet_metric.add(source, hypothesis, target)
+        unigram_f1_metric.add(source, hypothesis, target)
 
     bleu = sacreblue_metric.compute()
-    comet = comet_metric.compute()
+    # comet_score = comet_metric.compute()
+    comet_score = 0
+    unigram_score = unigram_f1_metric.compute()
+
     test_results = {
         "sacrebleu": bleu,
-        "comet": comet
+        "comet": comet_score,
+        "unigram_f1": unigram_score
     }
 
     print(test_results)

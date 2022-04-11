@@ -3,7 +3,7 @@ import math
 import pytorch_lightning as pl
 
 import yaml
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
+from pytorch_lightning.callbacks import EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from ray import tune
 from ray.tune import CLIReporter
@@ -22,7 +22,7 @@ from scripts.Collate import SequenceCollator, util_functions
 def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
-    parser.add_argument('--config', type=str, default='./configs/predictive/hyperparam_search_gaussian.yml',
+    parser.add_argument('--config', type=str, default='./configs/predictive/unigram_f1\hyperparam_search_MSE.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -168,7 +168,7 @@ def train_model_tune(hyperparams, model_config, dataset_config, num_epochs=15, n
     pl_model_factory = PLPredictiveModelFactory(model_config, )
     pl_model = pl_model_factory.create_model()
 
-    preprocess_dir = dataset_config["preprocess_dir"] + "{}_{}/".format(dataset_config["n_hypotheses"],
+    preprocess_dir = dataset_config["preprocess_dir"] + "{}/{}_{}/".format(dataset_config["utility"], dataset_config["n_hypotheses"],
                                                                         dataset_config["n_references"])
 
     if on_hpc:

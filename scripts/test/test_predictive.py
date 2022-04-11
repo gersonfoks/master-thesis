@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
 from metrics.CometMetric import CometMetric
+from metrics.NGramF1Metric import NGramF1Metric
 from models.MBR_model.GaussianMBRModel import GaussianMBRModel
 from models.MBR_model.GaussianMixtureMBRModel import GaussianMixtureMBRModel
 from models.MBR_model.MSEMBRModel import MSEMBRModel
@@ -49,6 +50,9 @@ def main():
 
     sacreblue_metric = load_metric('sacrebleu')
     comet_metric = CometMetric(model_name="wmt20-comet-da")
+
+    unigram_f1_metric = NGramF1Metric(1)
+
     pl_model, factory = PLPredictiveModelFactory.load(path)
 
     pl_model.eval()
@@ -78,13 +82,16 @@ def main():
 
         sacreblue_metric.add_batch(predictions=[best_h], references=[[target]])
         comet_metric.add(source, best_h, target)
+        unigram_f1_metric.add(source, best_h, target)
 
     bleu = sacreblue_metric.compute()
-    comet_score = comet_metric.compute()
-    
+    #comet_score = comet_metric.compute()
+    comet_score = 0
+    unigram_score = unigram_f1_metric.compute()
     test_results = {
         "sacrebleu": bleu,
-        "comet": comet_score
+        "comet": comet_score,
+        "unigram_f1": unigram_score
     }
 
     print(test_results)

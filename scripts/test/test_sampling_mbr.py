@@ -13,6 +13,9 @@ import numpy as np
 from metrics.CometMetric import CometMetric
 import pandas as pd
 
+from metrics.NGramF1Metric import NGramF1Metric
+
+
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='Test model used as a predictive filter')
@@ -34,12 +37,11 @@ def main():
 
     dataset = dataset_loader.load(type="pandas")
 
-    print(dataset.data["utilities"].head())
-
     sacreblue_metric = load_metric('sacrebleu')
 
     comet_metric = CometMetric(model_name="wmt20-comet-da")
 
+    unigram_f1_metric = NGramF1Metric(1)
 
 
 
@@ -68,7 +70,7 @@ def main():
 
         counts = np.array(row["count"])
         probs = counts/np.sum(counts)
-        random_indices = np.random.choice(len(utilities), top_p, p=probs)
+        random_indices = np.random.choice(len(utilities), top_p, p=probs, replace=True)
 
 
         top_p_hypotheses = hypotheses[random_indices]
@@ -86,16 +88,20 @@ def main():
         sacreblue_metric.add_batch(predictions=[best_h], references=[[target]])
 
         comet_metric.add(source, best_h, target)
+        unigram_f1_metric.add(source, best_h, target)
+
+
+
 
     bleu = sacreblue_metric.compute()
-
-
-    comet_score = comet_metric.compute()
-
+    # comet_score = comet_metric.compute()
+    comet_score = 0
+    unigram_score = unigram_f1_metric.compute()
 
     test_results = {
         "sacrebleu": bleu,
-        "comet": comet_score
+        "comet": comet_score,
+        "unigram_f1": unigram_score
     }
 
     print(test_results)

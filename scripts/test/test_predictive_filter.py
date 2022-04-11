@@ -13,6 +13,9 @@ import numpy as np
 from metrics.CometMetric import CometMetric
 import pandas as pd
 
+from metrics.NGramF1Metric import NGramF1Metric
+
+
 def main():
     # Training settings
     parser = argparse.ArgumentParser(description='Test model used as a predictive filter')
@@ -49,7 +52,7 @@ def main():
 
     dataset.data["predicted_scores"] = samples["predicted_scores"]
 
-
+    unigram_f1_metric = NGramF1Metric(1)
     # Calculate the means
 
 
@@ -91,16 +94,17 @@ def main():
         sacreblue_metric.add_batch(predictions=[best_h], references=[[target]])
 
         comet_metric.add(source, best_h, target)
+        unigram_f1_metric.add(source, best_h, target)
 
     bleu = sacreblue_metric.compute()
-
-
-    comet_score = comet_metric.compute()
-
+    # comet_score = comet_metric.compute()
+    comet_score = 0
+    unigram_score = unigram_f1_metric.compute()
 
     test_results = {
         "sacrebleu": bleu,
-        "comet": comet_score
+        "comet": comet_score,
+        "unigram_f1": unigram_score
     }
 
     print(test_results)

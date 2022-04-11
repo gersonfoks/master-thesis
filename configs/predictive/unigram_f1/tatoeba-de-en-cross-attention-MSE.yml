@@ -3,8 +3,8 @@
 dataset:
   preprocess_dir: 'predictive/tatoeba-de-en/data/preprocessed/'
   sampling_method: 'ancestral'
-  n_hypotheses: 100
-  n_references: 1000
+  n_hypotheses: 10
+  n_references: 100
   repeated_indices: False
 batch_size: 128
 

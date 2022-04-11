@@ -3,9 +3,10 @@
 dataset:
   preprocess_dir: 'predictive/tatoeba-de-en/data/preprocessed/'
   sampling_method: 'ancestral'
-  n_hypotheses: 10
-  n_references: 100
+  n_hypotheses: 100
+  n_references: 1000
   repeated_indices: False # True if we allow that hypotheses to be repeated multiple times else False
+  utility: 'unigram-f1'
 
 hyperparams:
   predictive_layers:
@@ -32,7 +33,7 @@ hyperparams:
   lr:
     type: loguniform
     values:
-      - 0.00001
+      - 0.000001
       - 0.001
   batch_size:
     - 64

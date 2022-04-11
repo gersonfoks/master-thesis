@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-cross-attention-MSE.yml',
+                        default='./configs/predictive/unigram_f1/tatoeba-de-en-cross-attention-MSE.yml',
                         help='config to load model from')
 
     parser.add_argument('--utility', type=str, default="unigram-f1")
