@@ -136,7 +136,7 @@ class PlLSTMModel(pl.LightningModule):
         loss = batch_out["loss"]
 
         for log_var in self.log_vars:
-            self.log("train_{}".format(log_var), batch_out[log_var])
+            self.log("train_{}".format(log_var), batch_out[log_var], on_step=True)
 
 
 
@@ -150,7 +150,7 @@ class PlLSTMModel(pl.LightningModule):
 
 
         for log_var in self.log_vars:
-            self.log("train_{}".format(log_var), batch_out[log_var])
+            self.log("train_{}".format(log_var), batch_out[log_var], on_step=True)
 
 
     def configure_optimizers(self):
