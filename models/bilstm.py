@@ -84,7 +84,7 @@ class BIListmModel(nn.Module):
         predicted_score = self.linear_layers(h_n)
 
 
-        return predicted_score
+        return predicted_score.flatten()
 
 
 class PlLSTMModel(pl.LightningModule):
@@ -118,7 +118,7 @@ class PlLSTMModel(pl.LightningModule):
 
         input_ids, score = batch
         input_ids = input_ids.to("cuda")
-        predicted_score = self.forward(input_ids).flatten()
+        predicted_score = self.forward(input_ids)
 
 
         score = score.to("cuda")
@@ -128,10 +128,9 @@ class PlLSTMModel(pl.LightningModule):
 
 
     def training_step(self, batch, batch_idx):
-
-
-
         batch_out = self.batch_to_out(batch)
+
+
 
 
         loss = batch_out["loss"]
@@ -145,11 +144,13 @@ class PlLSTMModel(pl.LightningModule):
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
+
+
         batch_out = self.batch_to_out(batch)
 
 
         for log_var in self.log_vars:
-            self.log("val_{}".format(log_var), batch_out[log_var])
+            self.log("train_{}".format(log_var), batch_out[log_var])
 
 
     def configure_optimizers(self):

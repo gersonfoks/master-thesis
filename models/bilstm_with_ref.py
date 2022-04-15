@@ -14,7 +14,7 @@ class BIListmModelWithRef(nn.Module):
         self.embedding = torch.nn.Embedding(vocab_size, embedding_size)
         self.hidden_size = 512
 
-        self.dropout = 0.25
+        self.dropout = 0.0
 
         self.num_layers = 2
         self.bidirectional = 1
@@ -36,6 +36,7 @@ class BIListmModelWithRef(nn.Module):
         ]
 
         self.linear_layers = self.create_linear_layers()
+
 
     # def element_wise_apply(self, fn, packed_sequence):
     #     # from: https://discuss.pytorch.org/t/how-to-use-pack-sequence-if-we-are-going-to-use-word-embedding-and-bilstm/28184/3
@@ -143,7 +144,7 @@ class PlLSTMModelWithRef(pl.LightningModule):
         loss = batch_out["loss"]
 
         for log_var in self.log_vars:
-            self.log("train_{}".format(log_var), batch_out[log_var])
+            self.log("train_{}".format(log_var), batch_out[log_var], on_step=True)
 
 
 
@@ -155,7 +156,7 @@ class PlLSTMModelWithRef(pl.LightningModule):
 
 
         for log_var in self.log_vars:
-            self.log("val_{}".format(log_var), batch_out[log_var])
+            self.log("val_{}".format(log_var), batch_out[log_var], on_step=True)
 
 
     def configure_optimizers(self):

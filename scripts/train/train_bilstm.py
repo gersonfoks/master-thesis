@@ -61,17 +61,6 @@ class Collate:
         return packed_model_input, score
 
 
-
-# def get_collate_fn(tokenizer):
-#     def collate_fn(batch):
-#         keys = list(batch[0].keys())
-#         collated = {key: [] for key in keys}
-#         for e in batch:
-#             for key in keys:
-#                 collated[key].append(e[key])
-#
-#         return collated
-#     return collate_fn
 def concat_source_and_hypotheses(x):
     source = x["source"]
     hypotheses = x["hypotheses"]
@@ -100,15 +89,6 @@ def preprocess_dataset(data):
 
     return df_exploded
 
-    # Lastly we create a huggingface dataset from it and
-
-    #dataset = Dataset.from_pandas(df_exploded)
-
-    # Next we can start iterating trough the dataset
-
-
-
-    #dataset_loader = DataLoader(dataset, batch_size=16, collate_fn=collate_fn, shuffle=True)
 
 
 unk_token = "<UNK>"  # token for unknown words
@@ -170,12 +150,7 @@ def main():
 
 
     tokenizer.train_from_iterator(data_to_tokenize, trainer)
-    # tokenizer.save('./tokenizer.json')
-    # tokenizer = ByteLevelBPETokenizer(
-    #         './tokenizer.json'
-    # )
 
-    #tokenizer = P
 
     train_dataset = Dataset.from_pandas(train_dataset)
 
