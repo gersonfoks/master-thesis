@@ -4,14 +4,16 @@ THis file contains a class that is a factory that construct models based on some
 
 from torch.optim.lr_scheduler import LambdaLR, ReduceLROnPlateau
 
-from models.pl_predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
-from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
-from models.pl_predictive.MSEPredictiveModel import MSEPredictiveModel
-from models.pl_predictive.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
-from models.pl_predictive.feature_functions import preprocess_functions, FeatureMap
+from models.predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
+from models.predictive.GaussianMixtureSharedPredictiveModel import GaussianMixtureSharedPredictiveModel
+from models.predictive.GaussianPredictiveModel import GaussianPredictiveModel
+from models.predictive.MSEPredictiveModel import MSEPredictiveModel
+from models.predictive.ReferenceMSEPredictiveModel import ReferenceMSEPredictiveModel
+from models.predictive.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
+from models.predictive.feature_functions import preprocess_functions, FeatureMap
 from models.predictive_head.HeadFactory import HeadFactory
 
-from utils.parsing.predictive import load_nmt_model
+from misc.parsing.predictive import load_nmt_model
 import torch
 
 import types
@@ -26,16 +28,15 @@ activation_functions = {
 
 
 def get_optimizer_function(config):
-    print(config["weight_decay"])
+
     if config["optimizer"] == "adam":
-
         def initializer(x):
-
             lr_config = {
-                "optimizer":  torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"]),
+                "optimizer": torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"]),
 
             }
             return lr_config
+
         return initializer
     if config["optimizer"] == "adam_with_schedule":
 
@@ -73,14 +74,8 @@ def get_optimizer_function(config):
         return initializer
 
     if config["optimizer"] == "adam_with_plateau":
-
         def initializer(x):
-
-
-
             optimizer = torch.optim.Adam(x, lr=config["lr"], weight_decay=config["weight_decay"])
-
-
 
             lr_config = {
                 "optimizer": optimizer,
@@ -110,44 +105,53 @@ class PLPredictiveModelFactory:
         # Load NMT model + tokenizer
         if nmt_model == None or tokenizer == None:
             nmt_model, tokenizer = load_nmt_model(self.config["nmt_model"], pretrained=True)
-        # Load predictive layer
+        # Load the feature map (as different models can use different features)
         feature_map = FeatureMap(self.config["features"])
-
         feature_names = feature_map.get_feature_names()
 
         self.config["feature_names"] = feature_names
         head = self.create_head(pretrained_head_path)
 
         # Load the optimizer function
-
         optimizer_function = get_optimizer_function(self.config)
         # Construct model
-        print(self.config["loss_function"])
-        if self.config["loss_function"] == "MSE":
-            pl_model = MSEPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
-                                          feature_map)
-        elif self.config["loss_function"] == "gaussian" or self.config[
-            "loss_function"] == "gaussian-full":  # Second one is legacy
-            pl_model = GaussianPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
-                                               feature_map)
 
-        elif self.config["loss_function"] == "gaussian-mixture":
-            print("using a gaussian mixture model")
-            pl_model = GaussianMixturePredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
-                                                      feature_map, n_mixtures=self.config["n_mixtures"])
-        elif self.config["loss_function"] == "gaussian":
-            pl_model = GaussianPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
-                                               feature_map, )
-        elif self.config["loss_function"] == "student-t-mixture":
-            print("using a student-t mixture model")
-            pl_model = StudentTMixturePredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
-                                                      feature_map, )
+        if self.config["model_type"] == "reference_model":
+            print("using reference model")
+            pl_model = ReferenceMSEPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function)
         else:
-            raise ValueError("Not a known type: {}".format(self.config["type"]))
+
+            if self.config["loss_function"] == "MSE":
+                pl_model = MSEPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
+                                              feature_map)
+            elif self.config["loss_function"] == "gaussian" or self.config[
+                "loss_function"] == "gaussian-full":  # Second one is legacy
+                pl_model = GaussianPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
+                                                   feature_map)
+
+            elif self.config["loss_function"] == "gaussian-mixture":
+                print("using a gaussian mixture model")
+                if "shared_params" in self.config.keys() and self.config["shared_params"]:
+                    print("use shared params")
+                    pl_model = GaussianMixtureSharedPredictiveModel(nmt_model, tokenizer, head, feature_names,
+                                                                    optimizer_function,
+                                                                    feature_map, n_mixtures=self.config["n_mixtures"])
+                else:
+                    pl_model = GaussianMixturePredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
+                                                              feature_map, n_mixtures=self.config["n_mixtures"])
+            elif self.config["loss_function"] == "gaussian":
+                pl_model = GaussianPredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
+                                                   feature_map, )
+            elif self.config["loss_function"] == "student-t-mixture":
+                print("using a student-t mixture model")
+                pl_model = StudentTMixturePredictiveModel(nmt_model, tokenizer, head, feature_names, optimizer_function,
+                                                          feature_map, )
+            else:
+                raise ValueError("Not a known type: {}".format(self.config["type"]))
 
         # Set the get_features function
-
-        pl_model.preprocess_function = types.MethodType(preprocess_functions[self.config["preprocess_type"]], pl_model)
+        if self.config["model_type"] != "reference_model":
+            pl_model.preprocess_function = types.MethodType(preprocess_functions[self.config["preprocess_type"]], pl_model)
 
         # Return the model
         return pl_model

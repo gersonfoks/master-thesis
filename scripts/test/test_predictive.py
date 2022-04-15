@@ -14,11 +14,12 @@ from models.MBR_model.GaussianMixtureMBRModel import GaussianMixtureMBRModel
 from models.MBR_model.MSEMBRModel import MSEMBRModel
 
 from models.MBR_model.StudentTMixtureMBRModel import StudentTMixtureMBRModel
-from models.pl_predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
-from models.pl_predictive.GaussianPredictiveModel import GaussianPredictiveModel
-from models.pl_predictive.MSEPredictiveModel import MSEPredictiveModel
-from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
-from models.pl_predictive.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
+from models.predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
+from models.predictive.GaussianMixtureSharedPredictiveModel import GaussianMixtureSharedPredictiveModel
+from models.predictive.GaussianPredictiveModel import GaussianPredictiveModel
+from models.predictive.MSEPredictiveModel import MSEPredictiveModel
+from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.predictive.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
 from utils.dataset_utils import save_dict_to_json
 
 
@@ -30,8 +31,8 @@ def main():
 
     parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
     parser.add_argument('--split', type=str, default="validation_predictive")
-    parser.add_argument('--model-name', type=str, default='MSE')
-    parser.add_argument('--utility', type=str, default="unigram-f1")
+    parser.add_argument('--model-name', type=str, default='gaussian-mixture-10')
+    parser.add_argument('--utility', type=str, default="COMET")
     parser.add_argument('--base-dir', type=str, default='C:/Users/gerso/FBR/predictive/tatoeba-de-en/models/')
 
     args = parser.parse_args()
@@ -59,7 +60,7 @@ def main():
 
     if type(pl_model) == StudentTMixturePredictiveModel:
         model = StudentTMixtureMBRModel(pl_model)
-    elif type(pl_model) == GaussianMixturePredictiveModel:
+    elif type(pl_model) == GaussianMixturePredictiveModel or type(pl_model) == GaussianMixtureSharedPredictiveModel:
         model = GaussianMixtureMBRModel(pl_model)
     elif type(pl_model) == GaussianPredictiveModel:
         model = GaussianMBRModel(pl_model)
@@ -85,8 +86,8 @@ def main():
         unigram_f1_metric.add(source, best_h, target)
 
     bleu = sacreblue_metric.compute()
-    #comet_score = comet_metric.compute()
-    comet_score = 0
+    comet_score = comet_metric.compute()
+    #comet_score = 0
     unigram_score = unigram_f1_metric.compute()
     test_results = {
         "sacrebleu": bleu,

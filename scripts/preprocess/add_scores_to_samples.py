@@ -1,21 +1,21 @@
 import argparse
-from datetime import datetime
 
 import torch
 
-from comet import download_model, load_from_checkpoint
 from tqdm import tqdm
 
-from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
-from custom_datasets.SampleDatasetLoader import SampleDatasetLoader
+from custom_datasets.BayesRiskDataset.BayesRiskDatasetCreator import BayesRiskDatasetCreator
+from custom_datasets.SampleDataset.SampleDatasetLoader import SampleDatasetLoader
 
-from models.wrappers.CometWrapper import CometWrapper
+from utilities.utilities import NGramF
 
+
+def load_utility(utility):
+    if utility == "unigram-f1":
+        return NGramF(1, tokenize=True)
 
 
 def main():
-
-
     # Training settings
     parser = argparse.ArgumentParser(description='Give the COMET scores for hypothesis given a reference set')
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -26,6 +26,8 @@ def main():
     parser.add_argument('--base-dir', type=str, default='NMT/tatoeba-de-en/data/')
 
     parser.add_argument('--save-dir', type=str, default='predictive/tatoeba-de-en/data/raw/')
+
+    parser.add_argument('--utility', type=str, default="unigram-f1")
 
     parser.add_argument('--n-hypotheses', type=int, default=10, help='Number of hypothesis to use')
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
@@ -46,20 +48,11 @@ def main():
     hyp_dataset = hyp_dataset_loader.load()
 
     # We get an empty dataset
-    resulting_dataset_loader = BayesRiskDatasetLoader(args.split, args.n_hypotheses, args.n_references,
-                                                      args.sampling_method, develop=args.develop,
-                                                      base=args.save_dir, )
-    resulting_dataset = resulting_dataset_loader.load_empty()
+    dataset_creator = BayesRiskDatasetCreator(args.split, args.n_hypotheses, args.n_references,
+                                                      args.sampling_method, args.utility, develop=args.develop,
+                                                      base=args.save_dir,)
 
-    # Load the model
-    model_path = download_model("wmt20-comet-da")
-    model = load_from_checkpoint(model_path)
-
-    model.to("cuda")
-
-    wrapped_model = CometWrapper(model)
-
-    model.eval()
+    utility = load_utility(args.utility)
 
     with torch.no_grad():
         pbar = tqdm(total=len(hyp_dataset))
@@ -72,9 +65,9 @@ def main():
 
             hyp_list = hyp_data["samples"]
 
-            scores = wrapped_model.fast_predict_batched(source, hyp_list, references)
+            scores = utility.call_batched(source, hyp_list, references)
 
-            resulting_dataset.add_row(source, hyp_data["target"], hyp_data["samples"], scores, ref_data["count"],
+            dataset_creator.add_row(source, hyp_data["target"], hyp_data["samples"], scores, ref_data["count"],
                                       hyp_data["count"],
                                       )
 
@@ -82,7 +75,7 @@ def main():
 
         pbar.close()
 
-    resulting_dataset_loader.save()
+    dataset_creator.save()
 
 
 if __name__ == '__main__':

@@ -13,11 +13,11 @@ from custom_datasets.SampleDataset import SampleDataset
 import torch
 
 # What to do:
-from utils.PathManager import get_path_manager
-from utils.dataset_utils import get_collate_fn, get_dataset
-from utils.parsing.predictive import load_nmt_model
-from utils.train_utils import preprocess_tokenize
-from utils.translation_model_utils import batch_sample
+from misc.PathManager import get_path_manager
+from misc.dataset_utils import get_collate_fn, get_dataset
+from misc.parsing.predictive import load_nmt_model
+from misc.train_utils import preprocess_tokenize
+from misc.translation_model_utils import batch_sample
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
                         help="Which split to generate samples for (train_predictive, validation_predictive or test")
 
     parser.add_argument('--develop', dest='develop', action="store_true",
-                        help='If true uses the develop set (with 100 sources) for fast development')
+                        help='If true uses only 100 sources for fast development')
 
     parser.set_defaults(develop=False)
 

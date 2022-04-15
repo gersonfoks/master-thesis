@@ -1,4 +1,4 @@
-from models.pl_predictive.pool_utils import avg_pooling, max_pooling
+from models.predictive.pool_utils import avg_pooling, max_pooling
 import torch
 
 import numpy as np
@@ -13,7 +13,7 @@ def get_pooled_features(self, input_ids, attention_mask, labels, decoder_input_i
 
     # Next perform average pooling
     # first apply attention_mask to encoder_last_hidden_state
-    attention_mask_decoder = (self.padding_id != labels).long()
+    attention_mask_decoder = (self.padding_id_labels != labels).long()
 
     avg_encoder_hidden_state = avg_pooling(encoder_last_hidden_state, attention_mask)
 
@@ -64,9 +64,6 @@ class FeatureMap:
         attention_mask_decoder = (self.padding_id != nmt_in["labels"]).long()
         return (nmt_out["decoder_hidden_states"][layer], ~attention_mask_decoder.bool())
 
-    def get_decoder_last_hidden_attention(self, nmt_in, nmt_out):
-        # Should check out how to do this. It is a bit confussing
-        raise NotImplementedError()
 
     def get_feature_names(self):
         feature_names = []

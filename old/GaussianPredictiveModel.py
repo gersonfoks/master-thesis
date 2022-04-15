@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 import torch
 from torch import nn
 
-from models.pl_predictive.pool_utils import avg_pooling
+from models.predictive.pool_utils import avg_pooling
 
 
 class GaussianPredictiveModel(pl.LightningModule):

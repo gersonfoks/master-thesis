@@ -1,6 +1,6 @@
 
 from models.misc import activation_functions
-from models.pl_predictive.PLPredictiveModelFactory import get_optimizer_function
+from models.predictive.PLPredictiveModelFactory import get_optimizer_function
 from models.prompt_tuning.PlPromptModel import PLPromptModel, PLFinetuneModel
 
 from utils.parsing.predictive import load_nmt_model

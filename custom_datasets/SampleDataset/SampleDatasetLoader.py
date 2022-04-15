@@ -2,17 +2,9 @@
 import ast
 
 
-from custom_datasets.SampleDataset import SampleDataset
-from utils.PathManager import get_path_manager
+from custom_datasets.SampleDataset.SampleDataset import SampleDataset
+from misc.PathManager import get_path_manager
 import pandas as pd
-
-'''
-Code for loading bayes risk datasets.
-
-The format of the datasets are:
-{split}_predictive_{sample_method}_scores_{n_hypothesis}_{n_references}
-'''
-
 
 class SampleDatasetLoader:
     def __init__(self, split, n_samples, sampling_method, develop=False, base='/NMT/tatoeba-de-en'):

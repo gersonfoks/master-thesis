@@ -8,7 +8,7 @@ import numpy as np
 
 
 def mean_util(utilities, count):
-    x = float(np.sum(utilities * count) / np.sum(count))**2
+    x = float(np.sum(utilities * count) / np.sum(count))
 
 
     return x

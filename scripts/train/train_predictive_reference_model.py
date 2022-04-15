@@ -1,17 +1,17 @@
-# Train a model with no overfitting countermeasures as a sanity check
+# File to train a model from scratch
 
 import argparse
 import pytorch_lightning as pl
 import yaml
 import numpy as np
-
+from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor
 from torch.utils.data import DataLoader
 
 from callbacks.CustomCheckpointCallback import CheckpointCallback
 from callbacks.predictive_callbacks import MyShuffleCallback
-from custom_datasets.FastPreBayesDataset import FastPreBayesDatasetLoader
+from custom_datasets.PreprocessedBayesRiskDataset.FastPreBayesDataset import FastPreBayesDatasetLoader
 
-from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 from scripts.Collate import SequenceCollator, util_functions
 from utils.PathManager import get_path_manager
 
@@ -23,7 +23,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-cross-attention-gaussian-mixture-2-sanity-check.yml',
+                        default='./configs/predictive/unigram_f1/top_n/tatoeba-de-en-cross-attention-MSE.yml',
                         help='config to load model from')
 
     parser.add_argument('--develop', dest='develop', action="store_true",
@@ -46,15 +46,17 @@ def main():
     pl_model.set_mode('features')
     dataset_config = config["dataset"]
 
-    preprocess_dir = dataset_config["preprocess_dir"] + "{}_{}/".format(dataset_config["n_hypotheses"],
+    utility = config["dataset"]["utility"]
+
+    preprocess_dir = dataset_config["preprocess_dir"] + "{}/top_n/{}_{}/".format(utility,dataset_config["n_hypotheses"],
                                                                         dataset_config["n_references"])
 
     if args.on_hpc:
         train_max_tables = 10
         val_max_tables = 10
     else:
-        train_max_tables = 4
-        val_max_tables = 6
+        train_max_tables = 2
+        val_max_tables = 3
 
     bayes_risk_dataset_loader_train = FastPreBayesDatasetLoader(preprocess_dir, "train_predictive",
                                                                 pl_model.feature_names,
@@ -81,18 +83,21 @@ def main():
 
     path_manager = get_path_manager()
 
-    path = path_manager.get_abs_path('predictive/tatoeba-de-en/models/gaussian_mixture_sanity_check/')
+    save_loc = config["save_loc"] + '/{}/'.format(utility)
+    path = path_manager.get_abs_path(save_loc)
 
-    checkpoint_callback = CheckpointCallback(pl_factory, path, metric="train_loss")
-
+    checkpoint_callback = CheckpointCallback(pl_factory, path)
+    early_stop_callback = EarlyStopping(monitor="val_loss", min_delta=0.00, patience=10, verbose=False, mode="min",
+                                        check_finite=True,
+                                        divergence_threshold=3)
 
 
     trainer = pl.Trainer(
-        max_epochs=25,
+        max_epochs=50,
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,
-        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback,]
+        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, LearningRateMonitor(logging_interval="epoch"), early_stop_callback]
     )
 
     # create the dataloaders

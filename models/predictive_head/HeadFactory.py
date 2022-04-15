@@ -25,7 +25,11 @@ class HeadFactory:
         }
 
     def get_head(self):
-        return self.model_functions[self.config["model_type"]]()
+        if self.config["model_type"] == "reference_model":
+
+            return self.model_functions["cross_attention"]()
+        else:
+            return self.model_functions[self.config["head_type"]]()
 
     def create_pooled_model(self):
 
@@ -159,7 +163,6 @@ class HeadFactory:
         head_path = path + 'head.pt'
         checkpoint = torch.load(head_path)
         factory = HeadFactory(checkpoint["config"])
-        print(factory.config)
         head = factory.get_head()
         head.load_state_dict(checkpoint["state_dict"])
         return head, factory

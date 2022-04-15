@@ -9,11 +9,11 @@ from torch.utils.data import DataLoader
 
 from callbacks.CustomCheckpointCallback import CheckpointCallback
 from callbacks.predictive_callbacks import MyShuffleCallback
-from custom_datasets.FastPreBayesDataset import FastPreBayesDatasetLoader
+from custom_datasets.PreprocessedBayesRiskDataset.FastPreprocessedBayesDatasetLoader import FastPreBayesDatasetLoader
 
-from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 from scripts.Collate import SequenceCollator, util_functions
-from utils.PathManager import get_path_manager
+from misc.PathManager import get_path_manager
 
 
 def main():
@@ -23,10 +23,11 @@ def main():
     parser = argparse.ArgumentParser(
         description='Train a model according with parameters specified in the config file ')
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/unigram_f1/tatoeba-de-en-cross-attention-MSE.yml',
+                        #default='./configs/predictive/COMET/tatoeba-de-en-cross-attention-gaussian-mixture-shared-10.yml',
+                        default='./configs/predictive/unigram_f1/cross-attention-MSE-overfit.yml',
                         help='config to load model from')
 
-    parser.add_argument('--utility', type=str, default="unigram-f1")
+
 
     parser.add_argument('--develop', dest='develop', action="store_true",
                         help='If true uses the develop set (with 100 sources) for fast development')
@@ -48,7 +49,9 @@ def main():
     pl_model.set_mode('features')
     dataset_config = config["dataset"]
 
-    preprocess_dir = dataset_config["preprocess_dir"] + "{}/{}_{}/".format(args.utility,dataset_config["n_hypotheses"],
+    utility = config["dataset"]["utility"]
+
+    preprocess_dir = dataset_config["preprocess_dir"] + "{}/{}_{}/".format(utility,dataset_config["n_hypotheses"],
                                                                         dataset_config["n_references"])
 
     if args.on_hpc:
@@ -83,7 +86,7 @@ def main():
 
     path_manager = get_path_manager()
 
-    save_loc = config["save_loc"] + '/{}/'.format(args.utility)
+    save_loc = config["save_loc"] + '/{}/'.format(utility)
     path = path_manager.get_abs_path(save_loc)
 
     checkpoint_callback = CheckpointCallback(pl_factory, path)
@@ -97,7 +100,7 @@ def main():
         gpus=1,
         progress_bar_refresh_rate=1,
         val_check_interval=0.5,
-        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, LearningRateMonitor(logging_interval="epoch"), early_stop_callback]
+        callbacks=[MyShuffleCallback(train_dataset), checkpoint_callback, LearningRateMonitor(logging_interval="epoch")]
     )
 
     # create the dataloaders

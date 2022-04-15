@@ -1,12 +1,13 @@
+import torch
 from torch import nn
 
 from custom_loss.GaussianMixtureLoss import GaussianMixtureLoss
-from models.pl_predictive.PLBasePredictiveModel import PLBasePredictiveModel
+from models.predictive.PLBasePredictiveModel import PLBasePredictiveModel
 
 from transformers import DataCollatorForSeq2Seq
 
 
-class GaussianMixturePredictiveModel(PLBasePredictiveModel):
+class GaussianMixtureSharedPredictiveModel(PLBasePredictiveModel):
 
     def __init__(self, nmt_model, tokenizer, head, feature_names, initialize_optimizer, feature_map, padding_id=-100,
 
@@ -15,6 +16,17 @@ class GaussianMixturePredictiveModel(PLBasePredictiveModel):
                          device=device, )
 
         self.n_mixtures = n_mixtures
+
+        # Create the loc and scale parameters
+        scale_weights = torch.empty(1, n_mixtures)
+        nn.init.normal_(scale_weights, )
+        self.scale_parameters = nn.Parameter(scale_weights)
+
+        loc_weights= torch.empty(1, n_mixtures)
+        nn.init.normal_(loc_weights)
+        self.loc_parameters = nn.Parameter(loc_weights)
+
+
         self.criterion = GaussianMixtureLoss()
 
         self.mode = "text"
@@ -39,12 +51,14 @@ class GaussianMixturePredictiveModel(PLBasePredictiveModel):
 
     def forward_features(self, features):
 
-        out = self.head.forward(features)
 
-        locs = out[:, :self.n_mixtures]
-        scales = self.softplus(out[:, self.n_mixtures:self.n_mixtures * 2])
+        logits = self.head.forward(features)
 
-        logits = out[:, 2 * self.n_mixtures: 3 * self.n_mixtures]
+        batch_size = logits.shape[0]
+        locs = self.loc_parameters.repeat(batch_size, 1)
+
+
+        scales = self.softplus(self.scale_parameters.repeat(batch_size, 1))
 
         return locs, scales, logits
 
@@ -119,3 +133,7 @@ class GaussianMixturePredictiveModel(PLBasePredictiveModel):
             'decoder_input_ids': decoder_input_ids
         }
         return self.feature_map(nmt_in, nmt_out)
+
+
+    def configure_optimizers(self):
+        return self.initialize_optimizer(list(self.head.parameters()) + [self.loc_parameters, self.scale_parameters])

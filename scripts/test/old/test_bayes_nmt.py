@@ -6,7 +6,7 @@ import torch
 
 from models.MBR_model.GaussianMBRModel import GaussianMBRModel
 
-from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 
 from utils.dataset_utils import get_dataset
 

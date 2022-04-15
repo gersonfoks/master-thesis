@@ -2,9 +2,9 @@ import pytorch_lightning as pl
 import torch
 from torch import nn
 
-from models.pl_predictive.BasePredictiveModel import BasePredictiveModel
-from models.pl_predictive.GaussianPredictiveModel import avg_pooling
-from models.pl_predictive.pool_utils import max_pooling
+from models.predictive.BasePredictiveModel import BasePredictiveModel
+from models.predictive.GaussianPredictiveModel import avg_pooling
+from models.predictive.pool_utils import max_pooling
 from transformers import DataCollatorForSeq2Seq
 
 

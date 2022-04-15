@@ -9,10 +9,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
-from custom_datasets.PreBayesRiskDatasetCreator import PreBayesDatasetCreator
-from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
-
-import pandas as pd
+from custom_datasets.PreprocessedBayesRiskDataset.PreBayesRiskDatasetCreator import PreBayesDatasetCreator
+from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 
 
 def collate_fn(batch):
@@ -29,7 +27,7 @@ def main():
     parser = argparse.ArgumentParser(description='Preprocesses a dataset')
 
     parser.add_argument('--config', type=str,
-                        default='./configs/predictive/tatoeba-de-en-cross-attention-MSE.yml',
+                        default='./configs/predictive/unigram_f1/top_n/tatoeba-de-en-cross-attention-MSE.yml',
                         help='config to load model from')
     parser.add_argument('--develop', dest='develop', action="store_true",
                         help='If true uses the develop set (with 100 sources) for fast development')
@@ -42,11 +40,11 @@ def main():
 
     parser.add_argument('--save-dir', type=str, default='predictive/tatoeba-de-en/data/preprocessed/')
 
-    parser.add_argument('--n-hypotheses', type=int, default=100, help='Number of hypothesis to use')
+    parser.add_argument('--n-hypotheses', type=int, default=10, help='Number of hypothesis to use')
     parser.add_argument('--sampling-method', type=str, default="ancestral", help='sampling method for the hypothesis')
 
-    parser.add_argument('--n-references', type=int, default=1000, help='Number of references for each hypothesis')
-    parser.add_argument('--max-dataset-size', type=int, default=4096 * 8, help='Max number of dataset entries ')
+    parser.add_argument('--n-references', type=int, default=100, help='Number of references for each hypothesis')
+    parser.add_argument('--max-dataset-size', type=int, default=4096 * 4, help='Max number of dataset entries ')
 
     parser.add_argument('--split', type=str, default="train_predictive",
                         help="Which split to generate samples for (train_predictive, validation_predictive or test")
@@ -54,14 +52,14 @@ def main():
     args = parser.parse_args()
 
     dataset_dir = args.dataset_dir
-    save_dir = args.save_dir + '/' + args.utility + '/'
+    save_dir = args.save_dir + '/' + args.utility + '/' + 'top_n/'
 
     bayes_risk_dataset_loader = BayesRiskDatasetLoader(args.split, args.n_hypotheses, args.n_references,
                                                        args.sampling_method, args.utility, develop=args.develop, base=dataset_dir)
 
-    bayes_risk_dataset = bayes_risk_dataset_loader.load(type="pandas")
+    bayes_risk_dataset = bayes_risk_dataset_loader.load(type="pandas", top_n=3)
 
-    # We want to transform this thing to a extended dataset. We use pandas for this
+    # We want to transform this thing to an extended dataset. We use pandas for this
 
     df = bayes_risk_dataset.data
 
@@ -74,6 +72,7 @@ def main():
 
     # Next we "explode the data
     df_exploded = df.explode(["hypotheses", "utilities", "count"], ignore_index=True)
+
 
     # Lastly we create a huggingface dataset from it and
 
@@ -97,6 +96,7 @@ def main():
         preprocessed = pl_model.preprocess_function(data)
 
         dataset_creator.add_rows({**data, **preprocessed})
+
 
     dataset_creator.finalize()
 

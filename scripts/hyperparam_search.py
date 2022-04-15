@@ -13,9 +13,9 @@ from torch.utils.data import DataLoader
 
 from callbacks.CustomCheckpointCallback import CheckpointCallback
 from callbacks.predictive_callbacks import MyShuffleCallback
-from custom_datasets.FastPreBayesDataset import FastPreBayesDatasetLoader
+from custom_datasets.PreprocessedBayesRiskDataset.FastPreBayesDataset import FastPreBayesDatasetLoader
 
-from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 from scripts.Collate import SequenceCollator, util_functions
 
 

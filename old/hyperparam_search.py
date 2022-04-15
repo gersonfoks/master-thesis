@@ -12,7 +12,7 @@ from ray.tune.integration.pytorch_lightning import TuneReportCallback
 from ray.tune.schedulers import ASHAScheduler
 from torch.utils.data import DataLoader
 from custom_datasets.PreprocessedBayesRiskDatasetLoader import BayesRiskDataset
-from models.pl_predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
 from datetime import datetime
 
 

@@ -3,7 +3,7 @@ from torch import nn
 
 
 from custom_loss.CustomGaussianNLLLoss import CustomGaussianNLLLoss
-from models.pl_predictive.PLBasePredictiveModel import PLBasePredictiveModel
+from models.predictive.PLBasePredictiveModel import PLBasePredictiveModel
 
 from transformers import DataCollatorForSeq2Seq
 

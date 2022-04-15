@@ -11,8 +11,6 @@ class CachedTable:
         self.preloaded_data = {**{feature_name: [] for feature_name in self.features}, "source": [], "hypothesis": [],
                                "utilities": [], "utilities_count": []}
 
-
-
     def __len__(self):
         return self.end_id - self.start_id
 

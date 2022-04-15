@@ -5,7 +5,7 @@
 from torch import nn
 import torch
 
-from models.pl_predictive.pool_utils import avg_pooling, max_pooling
+from models.predictive.pool_utils import avg_pooling, max_pooling
 
 
 class PooledHead(nn.Module):

@@ -1,0 +1,66 @@
+# Copies the structure of the NTM config, is used for loading the NMT model
+
+dataset:
+  preprocess_dir: 'predictive/tatoeba-de-en/data/preprocessed/'
+  sampling_method: 'ancestral'
+  n_hypotheses: 10
+  n_references: 100
+  repeated_indices: False
+  utility: 'unigram-f1'
+batch_size: 128
+
+save_loc: 'predictive/tatoeba-de-en/models/MSE-top-3/'
+
+model_config:
+  lr: 0.00005
+  weight_decay: 0.0
+  loss_function: 'MSE'
+  preprocess_type: 'reference_model'
+  model_type: 'reference_model'
+  cross_attention_layers:
+    n_heads: 4
+    hidden_dim: 512
+    cross_attention:
+      - - decoder_hidden_state_-1
+        - encoder_hidden_state_-1
+      - - decoder_hidden_state_-1
+        - decoder_hidden_state_-1
+      - - decoder_hidden_state_-1
+        - reference_0
+      - - decoder_hidden_state_-1
+        - reference_1
+      - - decoder_hidden_state_-1
+        - reference_2
+  query_layers:
+    n_queries: 2
+    n_heads: 4
+    hidden_dim: 512
+  dropout: 0.5
+  features:
+    decoder_hidden_state: # Which hidden states to use
+      - -1
+    encoder_hidden_state: # Which hidden states to use
+      - -1
+    reference:
+      - 0
+      - 1
+      - 2
+  nmt_model:
+    model:
+      name: 'Helsinki-NLP/opus-mt-de-en'
+      checkpoint: 'NMT/tatoeba-de-en/model'
+      type: 'MarianMT'
+  activation_function: 'silu'
+  activation_function_last_layer: 'sigmoid'
+  predictive_layers:
+    - 5120 # n_queries * (top_n + 2)  * 512 (+2 is for the self attention and the attention on the decoder hidden state)
+    - 4096
+    - 2048
+    - 1024
+    - 512
+    - 1
+  optimizer: "adam"
+  top_n: 3
+
+
+
