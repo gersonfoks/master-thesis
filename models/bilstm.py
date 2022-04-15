@@ -128,29 +128,24 @@ class PlLSTMModel(pl.LightningModule):
 
 
     def training_step(self, batch, batch_idx):
+        batch_size = batch[1].shape[0]
         batch_out = self.batch_to_out(batch)
 
-
-
+        for log_var in self.log_vars:
+            self.log("train_{}".format(log_var), batch_out[log_var], on_step=True, batch_size=batch_size)
 
         loss = batch_out["loss"]
-
-        for log_var in self.log_vars:
-            self.log("train_{}".format(log_var), batch_out[log_var], on_step=True)
-
-
-
         return loss
 
     @torch.no_grad()
     def validation_step(self, batch, batch_idx):
 
-
+        batch_size = batch[1].shape[0]
         batch_out = self.batch_to_out(batch)
 
 
         for log_var in self.log_vars:
-            self.log("train_{}".format(log_var), batch_out[log_var], on_step=True)
+            self.log("train_{}".format(log_var), batch_out[log_var], on_step=True, batch_size=batch_size)
 
 
     def configure_optimizers(self):
