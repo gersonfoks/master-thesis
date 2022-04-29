@@ -1,33 +1,22 @@
-import torch
+
 from torch import nn
 
-from custom_loss.GaussianMixtureLoss import GaussianMixtureLoss
-from models.predictive.PLBasePredictiveModel import PLBasePredictiveModel
+
+from custom_loss.CustomGaussianNLLLoss import CustomGaussianNLLLoss
+from models.estimation.PLBasePredictiveModel import PLBasePredictiveModel
 
 from transformers import DataCollatorForSeq2Seq
 
 
-class GaussianMixtureSharedPredictiveModel(PLBasePredictiveModel):
+class GaussianPredictiveModel(PLBasePredictiveModel):
 
     def __init__(self, nmt_model, tokenizer, head, feature_names, initialize_optimizer, feature_map, padding_id=-100,
 
-                 device="cuda", n_mixtures=2):
+                 device="cuda", ):
         super().__init__(nmt_model, tokenizer, head, initialize_optimizer, padding_id=padding_id,
                          device=device, )
 
-        self.n_mixtures = n_mixtures
-
-        # Create the loc and scale parameters
-        scale_weights = torch.empty(1, n_mixtures)
-        nn.init.normal_(scale_weights, )
-        self.scale_parameters = nn.Parameter(scale_weights)
-
-        loc_weights= torch.empty(1, n_mixtures)
-        nn.init.normal_(loc_weights)
-        self.loc_parameters = nn.Parameter(loc_weights)
-
-
-        self.criterion = GaussianMixtureLoss()
+        self.criterion = CustomGaussianNLLLoss()
 
         self.mode = "text"
 
@@ -41,8 +30,6 @@ class GaussianMixtureSharedPredictiveModel(PLBasePredictiveModel):
 
         self.softplus = nn.Softplus()
 
-        self.softmax = nn.Softmax(dim=-1)
-
     def forward(self, input_ids, attention_mask, labels, decoder_input_ids):
 
         features = self.get_features(input_ids, attention_mask, labels, decoder_input_ids)
@@ -51,19 +38,16 @@ class GaussianMixtureSharedPredictiveModel(PLBasePredictiveModel):
 
     def forward_features(self, features):
 
-
-        logits = self.head.forward(features)
-
-        batch_size = logits.shape[0]
-        locs = self.loc_parameters.repeat(batch_size, 1)
-
-
-        scales = self.softplus(self.scale_parameters.repeat(batch_size, 1))
-
-        return locs, scales, logits
+        out = self.head.forward(features)
+        average = out[:, 0]
+        var = out[:, 1]
+        return average, self.softplus(var)
 
     def get_predicted_risk(self, input_ids, attention_mask, labels, decoder_input_ids):
-        raise NotImplementedError()
+
+        (average, var) = self.forward(input_ids, attention_mask, labels, decoder_input_ids)
+
+        return average
 
     def batch_to_out(self, batch):
 
@@ -72,18 +56,18 @@ class GaussianMixtureSharedPredictiveModel(PLBasePredictiveModel):
 
             x = {k: v.to("cuda") for k, v in x.items()}
 
-            locs, scales, logits = self.forward(**x)
+            (average, var) = self.forward(**x)
 
 
         else:
             features, (sources, hypothesis), utilities = batch
 
             features = {k: v.to("cuda") for k, v in features.items()}
-            locs, scales, logits = self.forward_features(features)
+            (average, var) = self.forward_features(features)
 
         utilities = utilities.to("cuda")
 
-        loss = self.criterion(locs, utilities, scales, logits)
+        loss = self.criterion(average, utilities, var)
 
         return {"loss": loss}
 
@@ -133,7 +117,3 @@ class GaussianMixtureSharedPredictiveModel(PLBasePredictiveModel):
             'decoder_input_ids': decoder_input_ids
         }
         return self.feature_map(nmt_in, nmt_out)
-
-
-    def configure_optimizers(self):
-        return self.initialize_optimizer(list(self.head.parameters()) + [self.loc_parameters, self.scale_parameters])

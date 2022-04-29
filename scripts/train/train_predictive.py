@@ -11,7 +11,7 @@ from callbacks.CustomCheckpointCallback import CheckpointCallback
 from callbacks.predictive_callbacks import MyShuffleCallback
 from custom_datasets.PreprocessedBayesRiskDataset.FastPreprocessedBayesDatasetLoader import FastPreBayesDatasetLoader
 
-from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.estimation.PLPredictiveModelFactory import PLPredictiveModelFactory
 from scripts.Collate import SequenceCollator, util_functions
 from misc.PathManager import get_path_manager
 

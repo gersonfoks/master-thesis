@@ -7,8 +7,8 @@ from datasets import Dataset
 import torch
 from transformers import MarianTokenizer, MarianMTModel
 
-from models.predictive.GaussianPredictiveModel import GaussianPredictiveModel
-from models.predictive.MLEPredictiveModel import MSEPredictiveModel
+from models.estimation.GaussianPredictiveModel import GaussianPredictiveModel
+from models.estimation.MLEPredictiveModel import MSEPredictiveModel
 
 from utils.dataset_utils import get_dataset
 

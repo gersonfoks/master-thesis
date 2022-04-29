@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from custom_datasets.PreprocessedBayesRiskDataset.FastPreBayesDataset import FastPreBayesDatasetLoader
 
-from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.estimation.PLPredictiveModelFactory import PLPredictiveModelFactory
 from scripts.Collate import SequenceCollator, util_functions
 from utils.PathManager import get_path_manager
 

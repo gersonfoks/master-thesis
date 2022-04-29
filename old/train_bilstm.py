@@ -20,7 +20,7 @@ from transformers import DataCollatorWithPadding, PreTrainedTokenizer
 from custom_datasets.BayesRiskDataset.BayesRiskDatasetLoader import BayesRiskDatasetLoader
 from custom_datasets.PreprocessedBayesRiskDataset.PreBayesRiskDatasetCreator import PreBayesDatasetCreator
 from models.bilstm import BIListmModel, PlLSTMModel
-from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.estimation.PLPredictiveModelFactory import PLPredictiveModelFactory
 
 
 

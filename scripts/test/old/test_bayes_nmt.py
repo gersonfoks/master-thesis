@@ -4,9 +4,9 @@ import argparse
 from datasets import tqdm, load_metric, Dataset
 import torch
 
-from models.MBR_model.GaussianMBRModel import GaussianMBRModel
+from models.MBR.GaussianMBRModel import GaussianMBRModel
 
-from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.estimation.PLPredictiveModelFactory import PLPredictiveModelFactory
 
 from utils.dataset_utils import get_dataset
 

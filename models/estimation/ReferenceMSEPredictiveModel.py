@@ -3,13 +3,13 @@ from torch import nn
 from torch.nn import MSELoss
 import numpy as np
 from custom_loss.GaussianMixtureLoss import GaussianMixtureLoss
-from models.predictive.PLBasePredictiveModel import PLBasePredictiveModel
+from models.estimation.PLBasePredictiveModel import PLBasePredictiveModel
 
 from transformers import DataCollatorForSeq2Seq
 
 import pytorch_lightning as pl
 
-from models.predictive.feature_functions import remove_padding
+from models.estimation.feature_functions import remove_padding
 
 
 class ReferenceMSEPredictiveModel(pl.LightningModule):

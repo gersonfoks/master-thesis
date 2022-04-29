@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
 from custom_datasets.PreprocessedBayesRiskDataset.PreBayesRiskDatasetCreator import PreBayesDatasetCreator
-from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.estimation.PLPredictiveModelFactory import PLPredictiveModelFactory
 
 
 def collate_fn(batch):

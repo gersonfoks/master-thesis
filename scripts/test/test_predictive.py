@@ -9,17 +9,17 @@ from tqdm import tqdm
 from custom_datasets.BayesRiskDatasetLoader import BayesRiskDatasetLoader
 from metrics.CometMetric import CometMetric
 from metrics.NGramF1Metric import NGramF1Metric
-from models.MBR_model.GaussianMBRModel import GaussianMBRModel
-from models.MBR_model.GaussianMixtureMBRModel import GaussianMixtureMBRModel
-from models.MBR_model.MSEMBRModel import MSEMBRModel
+from models.MBR.GaussianMBRModel import GaussianMBRModel
+from models.MBR.GaussianMixtureMBRModel import GaussianMixtureMBRModel
+from models.MBR.MSEMBRModel import MSEMBRModel
 
-from models.MBR_model.StudentTMixtureMBRModel import StudentTMixtureMBRModel
-from models.predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
-from models.predictive.GaussianMixtureSharedPredictiveModel import GaussianMixtureSharedPredictiveModel
-from models.predictive.GaussianPredictiveModel import GaussianPredictiveModel
-from models.predictive.MSEPredictiveModel import MSEPredictiveModel
-from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
-from models.predictive.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
+from models.MBR.StudentTMixtureMBRModel import StudentTMixtureMBRModel
+from models.estimation.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
+from models.estimation.GaussianMixtureSharedPredictiveModel import GaussianMixtureSharedPredictiveModel
+from models.estimation.GaussianPredictiveModel import GaussianPredictiveModel
+from models.estimation.MSEPredictiveModel import MSEPredictiveModel
+from models.estimation.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.estimation.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
 from utils.dataset_utils import save_dict_to_json
 
 

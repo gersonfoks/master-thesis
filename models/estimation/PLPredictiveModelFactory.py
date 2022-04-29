@@ -4,13 +4,13 @@ THis file contains a class that is a factory that construct models based on some
 
 from torch.optim.lr_scheduler import LambdaLR, ReduceLROnPlateau
 
-from models.predictive.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
-from models.predictive.GaussianMixtureSharedPredictiveModel import GaussianMixtureSharedPredictiveModel
-from models.predictive.GaussianPredictiveModel import GaussianPredictiveModel
-from models.predictive.MSEPredictiveModel import MSEPredictiveModel
-from models.predictive.ReferenceMSEPredictiveModel import ReferenceMSEPredictiveModel
-from models.predictive.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
-from models.predictive.feature_functions import preprocess_functions, FeatureMap
+from models.estimation.GaussianMixturePredictiveModel import GaussianMixturePredictiveModel
+from models.estimation.GaussianMixtureSharedPredictiveModel import GaussianMixtureSharedPredictiveModel
+from models.estimation.GaussianPredictiveModel import GaussianPredictiveModel
+from models.estimation.MSEPredictiveModel import MSEPredictiveModel
+from models.estimation.ReferenceMSEPredictiveModel import ReferenceMSEPredictiveModel
+from models.estimation.StudentTMixturePredictiveModel import StudentTMixturePredictiveModel
+from models.estimation.feature_functions import preprocess_functions, FeatureMap
 from models.predictive_head.HeadFactory import HeadFactory
 
 from misc.parsing.predictive import load_nmt_model

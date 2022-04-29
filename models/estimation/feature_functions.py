@@ -1,4 +1,4 @@
-from models.predictive.pool_utils import avg_pooling, max_pooling
+from models.estimation.pool_utils import avg_pooling, max_pooling
 import torch
 
 import numpy as np

@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from callbacks.predictive_callbacks import MyShuffleCallback
 from custom_datasets.PreprocessedBayesRiskDatasetLoader import PreprocessedBayesRiskDatasetLoader
-from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.estimation.PLPredictiveModelFactory import PLPredictiveModelFactory
 from scripts.Collate import Collator, mean_util, SequenceCollator
 
 

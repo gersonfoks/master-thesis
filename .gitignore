@@ -8,6 +8,7 @@ __pycache__/
 .idea
 comet_model
 lightning_logs
+logs
 # C extensions
 *.so
 

@@ -1,22 +1,22 @@
-
 from torch import nn
 
-
-from custom_loss.CustomGaussianNLLLoss import CustomGaussianNLLLoss
-from models.predictive.PLBasePredictiveModel import PLBasePredictiveModel
+from custom_loss.GaussianMixtureLoss import GaussianMixtureLoss
+from custom_loss.StudentTMixtureLoss import StudentTMixtureLoss
+from models.estimation.PLBasePredictiveModel import PLBasePredictiveModel
 
 from transformers import DataCollatorForSeq2Seq
 
 
-class GaussianPredictiveModel(PLBasePredictiveModel):
+class StudentTMixturePredictiveModel(PLBasePredictiveModel):
 
     def __init__(self, nmt_model, tokenizer, head, feature_names, initialize_optimizer, feature_map, padding_id=-100,
 
-                 device="cuda", ):
+                 device="cuda", n_mixtures=2):
         super().__init__(nmt_model, tokenizer, head, initialize_optimizer, padding_id=padding_id,
                          device=device, )
 
-        self.criterion = CustomGaussianNLLLoss()
+        self.n_mixtures = n_mixtures
+        self.criterion = StudentTMixtureLoss()
 
         self.mode = "text"
 
@@ -30,6 +30,11 @@ class GaussianPredictiveModel(PLBasePredictiveModel):
 
         self.softplus = nn.Softplus()
 
+        self.softmax = nn.Softmax(dim=-1)
+
+        # To make sure we always have > 0 scales and df
+        self.eps = 1e-6
+
     def forward(self, input_ids, attention_mask, labels, decoder_input_ids):
 
         features = self.get_features(input_ids, attention_mask, labels, decoder_input_ids)
@@ -39,15 +44,16 @@ class GaussianPredictiveModel(PLBasePredictiveModel):
     def forward_features(self, features):
 
         out = self.head.forward(features)
-        average = out[:, 0]
-        var = out[:, 1]
-        return average, self.softplus(var)
+
+        locs = out[:, :self.n_mixtures]
+        scales = self.softplus(out[:, self.n_mixtures:self.n_mixtures * 2]) + self.eps
+        df = self.softplus(out[:, 2 * self.n_mixtures:3 * self.n_mixtures ]) + self.eps
+        logits = out[:, 3 * self.n_mixtures: 4 * self.n_mixtures]
+
+        return df, locs, scales, logits
 
     def get_predicted_risk(self, input_ids, attention_mask, labels, decoder_input_ids):
-
-        (average, var) = self.forward(input_ids, attention_mask, labels, decoder_input_ids)
-
-        return average
+        raise NotImplementedError()
 
     def batch_to_out(self, batch):
 
@@ -56,18 +62,18 @@ class GaussianPredictiveModel(PLBasePredictiveModel):
 
             x = {k: v.to("cuda") for k, v in x.items()}
 
-            (average, var) = self.forward(**x)
+            df, locs, scales, logits = self.forward(**x)
 
 
         else:
             features, (sources, hypothesis), utilities = batch
 
             features = {k: v.to("cuda") for k, v in features.items()}
-            (average, var) = self.forward_features(features)
+            df, locs, scales, logits = self.forward_features(features)
 
         utilities = utilities.to("cuda")
 
-        loss = self.criterion(average, utilities, var)
+        loss = self.criterion(df, locs, utilities, scales, logits)
 
         return {"loss": loss}
 

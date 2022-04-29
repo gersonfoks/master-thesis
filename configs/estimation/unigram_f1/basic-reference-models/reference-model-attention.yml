@@ -1,0 +1,57 @@
+# Copies the structure of the NTM config, is used for loading the NMT model
+
+dataset:
+  dir: 'predictive/tatoeba-de-en/data/raw/'
+  sampling_method: 'ancestral'
+  n_hypotheses: 10
+  n_references: 100
+  repeated_indices: False
+  utility: unigram-f1
+batch_size: 32
+accumulate_grad_batches: 4 # Effective batch size of 128
+
+max_epochs: 30
+
+
+save_loc: 'predictive/tatoeba-de-en/models/reference-model/'
+
+
+log_dir: './logs/basic-ref-model-attention'
+
+model_config:
+  lr: 0.0005 #1.4815897489348615e-05
+  weight_decay: 0.0 #1.001726887106992e-06
+  loss_function: 'MSE'
+  preprocess_type: 'full'
+  dropout: 0.25 #0.6712665889822903
+  nmt_model:
+    model:
+      name: 'Helsinki-NLP/opus-mt-de-en'
+      checkpoint: 'NMT/tatoeba-de-en/model'
+      type: 'MarianMT'
+  activation_function: 'silu'
+  activation_function_last_layer: 'sigmoid'
+
+  embedding: last_hidden # "nmt_embedding"
+  feed_forward_layers:
+    - 4096
+    - 2048
+    - 1024
+    - 512
+    - 1
+  feature_extraction_layer:
+    type: 'attention'
+    n_heads: 4
+#    type: lstm
+#    hidden_dim: 512
+  optimizer:
+    type: adam_with_steps
+    step_size: 1
+    gamma: 0.9
+#    type: adam_with_schedule
+#    warmup_steps: 5000
+#    start_decay: 10000
+
+
+
+

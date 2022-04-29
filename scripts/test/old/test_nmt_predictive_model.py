@@ -3,7 +3,7 @@
 from datasets import tqdm, load_metric, Dataset
 import torch
 
-from models.predictive.NMT_bayes_risk_model import NMTBayesRisk
+from models.estimation.NMT_bayes_risk_model import NMTBayesRisk
 from utils.config_utils import load_model
 from utils.dataset_utils import get_dataset
 

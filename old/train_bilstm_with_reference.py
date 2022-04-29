@@ -21,7 +21,7 @@ from custom_datasets.BayesRiskDataset.BayesRiskDatasetLoader import BayesRiskDat
 from custom_datasets.PreprocessedBayesRiskDataset.PreBayesRiskDatasetCreator import PreBayesDatasetCreator
 from models.bilstm import BIListmModel, PlLSTMModel
 from models.bilstm_with_ref import BIListmModelWithRef, PlLSTMModelWithRef
-from models.predictive.PLPredictiveModelFactory import PLPredictiveModelFactory
+from models.estimation.PLPredictiveModelFactory import PLPredictiveModelFactory
 
 
 

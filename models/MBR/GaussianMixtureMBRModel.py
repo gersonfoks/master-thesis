@@ -3,7 +3,7 @@ import torch
 
 import torch.distributions as td
 
-from models.MBR_model.BaseMBRModel import BaseMBRModel
+from models.MBR.BaseMBRModel import BaseMBRModel
 from utils.translation_model_utils import batch_sample, batch
 
 

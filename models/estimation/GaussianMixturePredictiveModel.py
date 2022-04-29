@@ -1,13 +1,12 @@
 from torch import nn
 
 from custom_loss.GaussianMixtureLoss import GaussianMixtureLoss
-from custom_loss.StudentTMixtureLoss import StudentTMixtureLoss
-from models.predictive.PLBasePredictiveModel import PLBasePredictiveModel
+from models.estimation.PLBasePredictiveModel import PLBasePredictiveModel
 
 from transformers import DataCollatorForSeq2Seq
 
 
-class StudentTMixturePredictiveModel(PLBasePredictiveModel):
+class GaussianMixturePredictiveModel(PLBasePredictiveModel):
 
     def __init__(self, nmt_model, tokenizer, head, feature_names, initialize_optimizer, feature_map, padding_id=-100,
 
@@ -16,7 +15,7 @@ class StudentTMixturePredictiveModel(PLBasePredictiveModel):
                          device=device, )
 
         self.n_mixtures = n_mixtures
-        self.criterion = StudentTMixtureLoss()
+        self.criterion = GaussianMixtureLoss()
 
         self.mode = "text"
 
@@ -32,9 +31,6 @@ class StudentTMixturePredictiveModel(PLBasePredictiveModel):
 
         self.softmax = nn.Softmax(dim=-1)
 
-        # To make sure we always have > 0 scales and df
-        self.eps = 1e-6
-
     def forward(self, input_ids, attention_mask, labels, decoder_input_ids):
 
         features = self.get_features(input_ids, attention_mask, labels, decoder_input_ids)
@@ -46,11 +42,11 @@ class StudentTMixturePredictiveModel(PLBasePredictiveModel):
         out = self.head.forward(features)
 
         locs = out[:, :self.n_mixtures]
-        scales = self.softplus(out[:, self.n_mixtures:self.n_mixtures * 2]) + self.eps
-        df = self.softplus(out[:, 2 * self.n_mixtures:3 * self.n_mixtures ]) + self.eps
-        logits = out[:, 3 * self.n_mixtures: 4 * self.n_mixtures]
+        scales = self.softplus(out[:, self.n_mixtures:self.n_mixtures * 2])
+        print(scales.shape)
+        logits = out[:, 2 * self.n_mixtures: 3 * self.n_mixtures]
 
-        return df, locs, scales, logits
+        return locs, scales, logits
 
     def get_predicted_risk(self, input_ids, attention_mask, labels, decoder_input_ids):
         raise NotImplementedError()
@@ -62,18 +58,18 @@ class StudentTMixturePredictiveModel(PLBasePredictiveModel):
 
             x = {k: v.to("cuda") for k, v in x.items()}
 
-            df, locs, scales, logits = self.forward(**x)
+            locs, scales, logits = self.forward(**x)
 
 
         else:
             features, (sources, hypothesis), utilities = batch
 
             features = {k: v.to("cuda") for k, v in features.items()}
-            df, locs, scales, logits = self.forward_features(features)
+            locs, scales, logits = self.forward_features(features)
 
         utilities = utilities.to("cuda")
 
-        loss = self.criterion(df, locs, utilities, scales, logits)
+        loss = self.criterion(locs, utilities, scales, logits)
 
         return {"loss": loss}
 
